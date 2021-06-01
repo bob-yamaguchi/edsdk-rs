@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 
 fn main() {
-    println!("cargo:rustc-link-search=native=lib");
+    println!("cargo:rustc-link-search=native=./lib");
 
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_dll_path = Path::new(&out_dir).join("../../..").join("EDSDK.dll");
