@@ -22,8 +22,9 @@ extern "stdcall" {
     /// # Returns:    Any of the sdk errors.
     pub fn EdsTerminateSDK()->EdsError;
 
-    /// # Reference-counter operating functions
-    ///      Increments the reference counter of existing objects.
+    // Reference-counter operating functions.
+
+    /// # Increments the reference counter of existing objects.
     /// # Parameters:
     /// * inRef - The reference for the item.
     /// # Returns:    Any of the sdk errors.
@@ -114,7 +115,8 @@ extern "stdcall" {
     /// # Parameters:
     /// * outCameraListRef - Pointer to the camera-list.
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsGetCameraList(outCameraListRef : *mut EdsCameraListRef)->EdsError;
+ //   pub fn EdsGetCameraList(outCameraListRef : *mut EdsCameraListRef)->EdsError;
+    pub fn EdsGetCameraList(outCameraListRef : &*mut c_void)->EdsError;
 
     //  Camera operating functions
 
