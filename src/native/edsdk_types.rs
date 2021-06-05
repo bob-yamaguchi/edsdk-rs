@@ -7,8 +7,8 @@
 use std::ffi::c_void;
 
 //  Definition of Constants
-const EDS_MAX_NAME              : usize = 256;
-const EDS_TRANSFER_BLOCK_SIZE   : usize = 512;
+pub const EDS_MAX_NAME              : usize = 256;
+pub const EDS_TRANSFER_BLOCK_SIZE   : usize = 512;
 
 /// Error Types
 pub type EdsError = u32;
@@ -943,10 +943,10 @@ pub struct EdsTime
 #[repr(C)]
 pub struct EdsDeviceInfo
 {
-    szPortName          : [u8; EDS_MAX_NAME],
-    szDeviceDescription : [u8; EDS_MAX_NAME],
-    deviceSubType       : u32,
-	reserved            : u32
+    pub szPortName          : [u8; EDS_MAX_NAME],
+    pub szDeviceDescription : [u8; EDS_MAX_NAME],
+    pub deviceSubType       : u32,
+	pub reserved            : u32
 }
 
 /// Volume Info

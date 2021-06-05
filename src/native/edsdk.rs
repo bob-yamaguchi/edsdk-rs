@@ -14,13 +14,13 @@ extern "stdcall" {
     /// When using the EDSDK libraries, you must call this API once  
     /// before using EDSDK APIs.
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsInitializeSDK()->EdsError;
+    pub fn EdsInitializeSDK()->EdsError; // worked
 
     /// # Terminates use of the libraries. 
     /// This function muse be called when ending the SDK.
     /// Calling this function releases all resources allocated by the libraries.
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsTerminateSDK()->EdsError;
+    pub fn EdsTerminateSDK()->EdsError; // worked
 
     // Reference-counter operating functions.
 
@@ -35,7 +35,7 @@ extern "stdcall" {
     /// # Parameters:
     /// * inRef - The reference of the item.
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsRelease(inRef : EdsBaseRef)->u32;
+    pub fn EdsRelease(inRef : EdsBaseRef)->u32; // worked
 
     // Item-tree operating functions
     /// # Gets the number of child objects of the designated object.
@@ -44,7 +44,7 @@ extern "stdcall" {
     /// * inRef - The reference of the list.
     /// * outCount - Number of elements in this list.
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsGetChildCount(inRef : EdsBaseRef, outCount : *mut u32)->EdsError;
+    pub fn EdsGetChildCount(inRef : EdsBaseRef, outCount : *mut u32)->EdsError; // worked
 
     /// # Gets an indexed child object of the designated object. 
     /// # Parameters:
@@ -52,7 +52,8 @@ extern "stdcall" {
     /// * inIndex -  The index that is passed in, is zero based.
     /// * outRef - The pointer which receives reference of the specified index .
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsGetChildAtIndex(inRef : EdsBaseRef, inIndex : i32, outRef : *mut EdsBaseRef)->EdsError;
+//    pub fn EdsGetChildAtIndex(inRef : EdsBaseRef, inIndex : i32, outRef : *mut EdsBaseRef)->EdsError;
+    pub fn EdsGetChildAtIndex(inRef : EdsBaseRef, inIndex : i32, outRef : &*mut c_void)->EdsError; // worked
 
     /// # Gets the parent object of the designated object.
     /// # Parameters:
@@ -116,7 +117,7 @@ extern "stdcall" {
     /// * outCameraListRef - Pointer to the camera-list.
     /// # Returns:    Any of the sdk errors.
  //   pub fn EdsGetCameraList(outCameraListRef : *mut EdsCameraListRef)->EdsError;
-    pub fn EdsGetCameraList(outCameraListRef : &*mut c_void)->EdsError;
+    pub fn EdsGetCameraList(outCameraListRef : &*mut c_void)->EdsError; // worked
 
     //  Camera operating functions
 
@@ -129,7 +130,7 @@ extern "stdcall" {
     /// * inCameraRef - The reference of the camera.
     /// * outDeviceInfo - Information as device of camera.
     ///  Returns:    Any of the sdk errors.
-    pub fn EdsGetDeviceInfo(inCameraRef : EdsCameraRef, outDeviceInfo : *mut EdsDeviceInfo)->EdsError;
+    pub fn EdsGetDeviceInfo(inCameraRef : EdsCameraRef, outDeviceInfo : *mut EdsDeviceInfo)->EdsError; // worked
 
     /// # Establishes a logical connection with a remote camera. 
     /// Use this API after getting the camera's EdsCamera object.
