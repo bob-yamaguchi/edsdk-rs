@@ -200,21 +200,21 @@ pub const kEdsCameraCommand_DoClickWBEvf        : EdsCameraCommand = 0x00000104u
 
 pub const kEdsCameraCommand_PressShutterButton  : EdsCameraCommand = 0x00000004u32;
 
-#[repr(u32)]
+#[repr(i32)]
 pub enum EdsEvfAf
 {
-	kEdsCameraCommand_EvfAf_OFF    = 0u32,
-	kEdsCameraCommand_EvfAf_ON     = 1u32,
+	kEdsCameraCommand_EvfAf_OFF    = 0i32,
+	kEdsCameraCommand_EvfAf_ON     = 1i32,
 }
 
-#[repr(u32)]
+#[repr(i32)]
 pub enum EdsShutterButton
 {
-	kEdsCameraCommand_ShutterButton_OFF                = 0x00000000u32,
-	kEdsCameraCommand_ShutterButton_Halfway            = 0x00000001u32,
-	kEdsCameraCommand_ShutterButton_Completely         = 0x00000003u32,
-	kEdsCameraCommand_ShutterButton_Halfway_NonAF      = 0x00010001u32,
-	kEdsCameraCommand_ShutterButton_Completely_NonAF   = 0x00010003u32,
+	kEdsCameraCommand_ShutterButton_OFF                = 0x00000000i32,
+	kEdsCameraCommand_ShutterButton_Halfway            = 0x00000001i32,
+	kEdsCameraCommand_ShutterButton_Completely         = 0x00000003i32,
+	kEdsCameraCommand_ShutterButton_Halfway_NonAF      = 0x00010001i32,
+	kEdsCameraCommand_ShutterButton_Completely_NonAF   = 0x00010003i32,
 }
 
 pub type EdsCameraStatusCommand = u32;
@@ -898,45 +898,45 @@ pub enum EdsETTL2Mode
 #[repr(C)]
 pub struct EdsPoint
 {
-    x   : i32,
-    y   : i32
+    pub x   : i32,
+    pub y   : i32
 }
 
 /// Size
 #[repr(C)]
 pub struct EdsSize
 {
-    width   : i32,
-    height  : i32
+    pub width   : i32,
+    pub height  : i32
 }
 
 /// Rectangle
 #[repr(C)]
 pub struct EdsRect
 {
-    point   : EdsPoint,
-    size    : EdsSize
+    pub point   : EdsPoint,
+    pub size    : EdsSize
 }
 
 /// Rational
 #[repr(C)]
 pub struct EdsRational
 {
-    numerator   : i32,
-    denominator : u32
+    pub numerator   : i32,
+    pub denominator : u32
 }
 
 /// Time
 #[repr(C)]
 pub struct EdsTime
 {
-    year            : u32,
-    month           : u32,
-    day             : u32,
-    hour            : u32,
-    minute          : u32,
-    second          : u32,
-    milliseconds    : u32
+    pub year            : u32,
+    pub month           : u32,
+    pub day             : u32,
+    pub hour            : u32,
+    pub minute          : u32,
+    pub second          : u32,
+    pub milliseconds    : u32
 }
 
 /// Device Info
@@ -953,118 +953,118 @@ pub struct EdsDeviceInfo
 #[repr(C)]
 pub struct EdsVolumeInfo
 {
-    storageType         : u32,
-    access              : EdsAccess,
-    maxCapacity         : u64,
-    freeSpaceInBytes    : u64,
-    szVolumeLabel       : [u8; EDS_MAX_NAME]
+    pub storageType         : u32,
+    pub access              : EdsAccess,
+    pub maxCapacity         : u64,
+    pub freeSpaceInBytes    : u64,
+    pub szVolumeLabel       : [u8; EDS_MAX_NAME]
 }
 
 /// DirectoryItem Info
 #[repr(C)]
 pub struct EdsDirectoryItemInfo
 {
-    size        : u64,
-    isFolder    : bool,
-    groupID     : u32,
-    option      : u32,
-    szFileName  : [u8; EDS_MAX_NAME],
+    pub size        : u64,
+    pub isFolder    : bool,
+    pub groupID     : u32,
+    pub option      : u32,
+    pub szFileName  : [u8; EDS_MAX_NAME],
 
-	format      : u32,
-	dateTime    : u32
+	pub format      : u32,
+	pub dateTime    : u32
 }
 
 /// Image Info
 #[repr(C)]
 pub struct EdsImageInfo
 {
-    width           : u32,
-    height          : u32,
-    numOfComponents : u32,
-    componentDepth  : u32,
-    effectiveRect   : EdsRect,
-    reserved1       : u32,
-    reserved2       : u32,
+    pub width           : u32,
+    pub height          : u32,
+    pub numOfComponents : u32,
+    pub componentDepth  : u32,
+    pub effectiveRect   : EdsRect,
+    pub reserved1       : u32,
+    pub reserved2       : u32,
 }
 
 /// SaveImage Setting
 #[repr(C)]
 pub struct EdsSaveImageSetting
 {
-    JPEGQuality         : u32,
-    iccProfileStream    : EdsStreamRef,
-    reserved            : u32
+    pub JPEGQuality         : u32,
+    pub iccProfileStream    : EdsStreamRef,
+    pub reserved            : u32
 }
 
 /// Property Desc
 #[repr(C)]
 pub struct EdsPropertyDesc
 {
-    form        : i32,
-    access      : i32,
-    numElements : i32,
-    propDesc    : [i32; 128]
+    pub form        : i32,
+    pub access      : i32,
+    pub numElements : i32,
+    pub propDesc    : [i32; 128]
 }
 
 /// Picture Style Desc
 #[repr(C)]
 pub struct EdsPictureStyleDesc
 {
-    contrast        : i32,
-    sharpness       : u32,
-    saturation      : i32,
-    colorTone       : i32,
-    filterEffect    : u32,
-    toningEffect    : u32,
-	sharpFineness   : u32,
-	sharpThreshold  : u32
+    pub contrast        : i32,
+    pub sharpness       : u32,
+    pub saturation      : i32,
+    pub colorTone       : i32,
+    pub filterEffect    : u32,
+    pub toningEffect    : u32,
+	pub sharpFineness   : u32,
+	pub sharpThreshold  : u32
 }
 
 /// Focus Info
 #[repr(C)]
 pub struct EdsFocusPoint
 {
-    valid       : u32,
-	selected    : u32,
-    justFocus   : u32,
-    rect        : EdsRect,
-    reserved    : u32
+    pub valid       : u32,
+	pub selected    : u32,
+    pub justFocus   : u32,
+    pub rect        : EdsRect,
+    pub reserved    : u32
 }
 
 #[repr(C)]
 pub struct EdsFocusInfo
 {
-    imageRect   : EdsRect,
-    pointNumber : u32,
-    focusPoint  : [EdsFocusPoint; 128],
-	executeMode : u32
+    pub imageRect   : EdsRect,
+    pub pointNumber : u32,
+    pub focusPoint  : [EdsFocusPoint; 128],
+	pub executeMode : u32
 }
 
 /// User WhiteBalance (PC set1,2,3)/ User ToneCurve / User PictureStyle dataset 
 #[repr(C)]
 pub struct EdsUsersetData
 {
-    valid       : u32,
-    dataSize    : u32,
-    szCaption   : [i8; 32],
-    data        : [u8; 1]
+    pub valid       : u32,
+    pub dataSize    : u32,
+    pub szCaption   : [i8; 32],
+    pub data        : [u8; 1]
 }
 
 /// Capacity
 #[repr(C)]
 pub struct EdsCapacity
 {
-    numberOfFreeClusters    : i32,
-    bytesPerSector          : i32,
-    reset                   : bool
+    pub numberOfFreeClusters    : i32,
+    pub bytesPerSector          : i32,
+    pub reset                   : bool
 }
 
 /// FramePoint
 #[repr(C)]
 pub struct EdsFramePoint
 {
-	x   : i32,
-	y   : i32
+	pub x   : i32,
+	pub y   : i32
 }
 
 // Callback Functions
@@ -1084,21 +1084,21 @@ pub type EdsObjectEventHandler = extern "C" fn(inEvent : EdsObjectEvent, inRef :
 /// EdsStateEventHandler
 pub type EdsStateEventHandler = extern "C" fn(inEvent : EdsStateEvent, inEventData : u32, inContext : *const c_void)->EdsError;
 
-type EdsReadStream = extern "C" fn(inContext: *const c_void, inReadSize : u32, outBuffer : *mut c_void, outReadSize : *mut u32)->EdsError;
-type EdsWriteStream = extern "C" fn(inContext: *const c_void, inWriteSize : u32, inBuffer : *const c_void, outWrittenSize : *mut u32)->EdsError;
-type EdsSeekStream = extern "C" fn(inContext : *const c_void, inSeekOffset : i32, inSeekOrigin : EdsSeekOrigin)->EdsError;
-type EdsTellStream = extern "C" fn(inContext : *const c_void, outPosition : *mut i32)->EdsError;
-type EdsGetStreamLength = extern "C" fn(inContext : *const c_void, outLength : *mut u32)->EdsError;
+pub type EdsReadStream = extern "C" fn(inContext: *const c_void, inReadSize : u32, outBuffer : *mut c_void, outReadSize : *mut u32)->EdsError;
+pub type EdsWriteStream = extern "C" fn(inContext: *const c_void, inWriteSize : u32, inBuffer : *const c_void, outWrittenSize : *mut u32)->EdsError;
+pub type EdsSeekStream = extern "C" fn(inContext : *const c_void, inSeekOffset : i32, inSeekOrigin : EdsSeekOrigin)->EdsError;
+pub type EdsTellStream = extern "C" fn(inContext : *const c_void, outPosition : *mut i32)->EdsError;
+pub type EdsGetStreamLength = extern "C" fn(inContext : *const c_void, outLength : *mut u32)->EdsError;
 
 #[repr(C)]
 pub struct EdsIStream
 {
-    context     : *const c_void,
+    pub context     : *const c_void,
 
-    read        : EdsReadStream,
-    write       : EdsWriteStream,
-    seek        : EdsSeekStream,
-    tell        : EdsTellStream,
-    getLength   : EdsGetStreamLength
+    pub read        : EdsReadStream,
+    pub write       : EdsWriteStream,
+    pub seek        : EdsSeekStream,
+    pub tell        : EdsTellStream,
+    pub getLength   : EdsGetStreamLength
 }
 

@@ -74,7 +74,7 @@ extern "stdcall" {
     /// * outSize - Pointer to the buffer that is to receive the property size.
     /// # Returns:    Any of the sdk errors.
     pub fn EdsGetPropertySize(inRef : EdsBaseRef, inPropertyID : EdsPropertyID, inParam : i32,
-                                outDataType : *mut EdsDataType, outSize : *mut u32)->EdsError;
+                                outDataType : *mut EdsDataType, outSize : *mut u32)->EdsError; // worked
 
     /// # Gets property information from the object designated in inRef.
     /// # Parameters:
@@ -83,12 +83,12 @@ extern "stdcall" {
     /// * inParam - Additional information of property.
     ///             We use this parameter in order to specify an index
     ///             in case there are two or more values over the same ID.
-    ///             inPropertySize - The number of bytes of the prepared buffer
+    /// * inPropertySize - The number of bytes of the prepared buffer
     ///             for receive property-value.
     /// * outPropertyData - The buffer pointer to receive property-value.
     /// # Returns:    Any of the sdk errors.
     pub fn EdsGetPropertyData(inRef : EdsBaseRef, inPropertyID : EdsPropertyID, inParam : i32, inPropertySize : u32,
-                                outPropertyData : *mut c_void )->EdsError;
+                                outPropertyData : *mut c_void )->EdsError; // worked
 
     /// # Sets property data for the object designated in inRef. 
     /// # Parameters:
@@ -98,7 +98,7 @@ extern "stdcall" {
     /// * inPropertySize - The number of bytes of the prepared buffer for set property-value.
     /// * inPropertyData - The buffer pointer to set property-value.
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsSetPropertyData(inRef : EdsBaseRef, inPropertyID : EdsPropertyID, inParam : i32, inPropertySize : u32, inPropertyData : *const c_void)->EdsError;
+    pub fn EdsSetPropertyData(inRef : EdsBaseRef, inPropertyID : EdsPropertyID, inParam : i32, inPropertySize : u32, inPropertyData : *const c_void)->EdsError; // worked
 
     /// # Gets a list of property data that can be set for the object designated in inRef, as well as maximum and minimum values. 
     /// This API is intended for only some shooting-related properties.
@@ -108,7 +108,7 @@ extern "stdcall" {
     /// * outPropertyDesc - Array of the value which can be set up.
     /// # Returns:    Any of the sdk errors.
     pub fn EdsGetPropertyDesc(inRef : EdsBaseRef, inPropertyID : EdsPropertyID,
-                                outPropertyDesc : *mut EdsPropertyDesc)->EdsError;
+                                outPropertyDesc : *mut EdsPropertyDesc)->EdsError; // worked
 
     //  Device-list and device operating functions
 
@@ -137,13 +137,13 @@ extern "stdcall" {
     /// # Parameters:
     /// * inCameraRef - The reference of the camera 
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsOpenSession(inCameraRef : EdsCameraRef)->EdsError;
+    pub fn EdsOpenSession(inCameraRef : EdsCameraRef)->EdsError; // worked
 
     /// # Closes a logical connection with a remote camera.
     /// # Parameters:
     /// * inCameraRef - The reference of the camera 
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsCloseSession(inCameraRef : EdsCameraRef)->EdsError;
+    pub fn EdsCloseSession(inCameraRef : EdsCameraRef)->EdsError; // worked
 
     /// # Sends a command such as "Shoot" to a remote camera. 
     /// # Parameters:
@@ -151,7 +151,7 @@ extern "stdcall" {
     /// * inCommand - Specifies the command to be sent.
     /// * inParam -     Specifies additional command-specific information.
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsSendCommand(inCameraRef : EdsCameraRef, inCommand : EdsCameraCommand, inParam : i32)->EdsError;
+    pub fn EdsSendCommand(inCameraRef : EdsCameraRef, inCommand : EdsCameraCommand, inParam : i32)->EdsError; // worked
 
     /// # Sets the remote camera state or mode.
     /// # Parameters:
@@ -159,7 +159,7 @@ extern "stdcall" {
     /// * inStatusCommand - Specifies the command to be sent.
     /// * inParam -     Specifies additional command-specific information.
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsSendStatusCommand(inCameraRef : EdsCameraRef, inStatusCommand : EdsCameraStatusCommand, inParam : i32)->EdsError;
+    pub fn EdsSendStatusCommand(inCameraRef : EdsCameraRef, inStatusCommand : EdsCameraStatusCommand, inParam : i32)->EdsError; // worked
 
     /// # Sets the remaining HDD capacity on the host computer
     /// (excluding the portion from image transfer),
@@ -176,7 +176,7 @@ extern "stdcall" {
     /// * inCameraRef - The reference of the camera which will receive the command.
     /// * inCapacity -  The remaining capacity of a transmission place.
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsSetCapacity(inCameraRef : EdsCameraRef, inCapacity : EdsCapacity)->EdsError;
+    pub fn EdsSetCapacity(inCameraRef : EdsCameraRef, inCapacity : EdsCapacity)->EdsError; // worked
 
     //  Volume operating functions
 
@@ -201,7 +201,7 @@ extern "stdcall" {
     /// * outDirItemInfo - information of the directory item.
     /// # Returns:    Any of the sdk errors.
     pub fn EdsGetDirectoryItemInfo(inDirItemRef : EdsDirectoryItemRef,
-                                    outDirItemInfo : *mut EdsDirectoryItemInfo)->EdsError;
+                                    outDirItemInfo : *mut EdsDirectoryItemInfo)->EdsError; // worked
 
     /// # Deletes a camera folder or file.
     /// If folders with subdirectories are designated, all files are deleted 
@@ -225,7 +225,7 @@ extern "stdcall" {
     /// * outStream    - The reference of the stream.
     /// # Returns:    Any of the sdk errors.
     pub fn EdsDownload(inDirItemRef : EdsDirectoryItemRef, inReadSize : u64,
-                        outStream : EdsStreamRef)->EdsError;
+                        outStream : EdsStreamRef)->EdsError; // worked
 
     /// # Must be executed when downloading of a directory item is canceled. 
     /// Calling this API makes the camera cancel file transmission.
@@ -243,7 +243,7 @@ extern "stdcall" {
     /// # Parameters:
     /// * inDirItemRef - The reference of the directory item.
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsDownloadComplete(inDirItemRef : EdsDirectoryItemRef)->EdsError;
+    pub fn EdsDownloadComplete(inDirItemRef : EdsDirectoryItemRef)->EdsError; // worked
 
     /// # Extracts and downloads thumbnail information from image files in a camera. 
     /// Thumbnail information in the camera's image files is downloaded 
@@ -292,7 +292,7 @@ extern "stdcall" {
     /// * outStream - The reference of the stream.
     /// # Returns:    Any of the sdk errors.
     pub fn EdsCreateFileStream(inFileName : *const u8, inCreateDisposition : EdsFileCreateDisposition, inDesiredAccess : EdsAccess,
-                                outStream : *mut EdsStreamRef)->EdsError;
+                                outStream : &*mut c_void)->EdsError; // worked
 
     /// # Creates a stream in the memory of a host computer. 
     /// In the case of writing in excess of the allocated buffer size, 
@@ -596,7 +596,7 @@ extern "stdcall" {
     /// * inContext - Passes inContext without modification,
     ///     as designated as an EdsSetObjectEventHandler argument. 
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsSetObjectEventHandler(inCameraRef : EdsCameraRef, inEvnet : EdsObjectEvent, inObjectEventHandler : EdsObjectEventHandler, inContext : *const c_void)->EdsError;
+    pub fn EdsSetObjectEventHandler(inCameraRef : EdsCameraRef, inEvnet : EdsObjectEvent, inObjectEventHandler : EdsObjectEventHandler, inContext : *const c_void)->EdsError; // worked
 
     /// # Registers a callback function for receiving status change notification events for property states on a camera.
     /// # Parameters:
@@ -617,7 +617,7 @@ extern "stdcall" {
     /// In console application, please call this function regularly to acquire
     /// the event from a camera.
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsGetEvent()->EdsError;
+    pub fn EdsGetEvent()->EdsError; // worked
 
 }
 
