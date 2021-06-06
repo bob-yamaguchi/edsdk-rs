@@ -302,7 +302,7 @@ extern "stdcall" {
     /// * outStream - The reference of the stream.
     /// # Returns:    Any of the sdk errors.
     pub fn EdsCreateMemoryStream(inBufferSize : u64,
-                                    outStream : *mut EdsStreamRef)->EdsError;
+                                    outStream : &*mut c_void)->EdsError;
 
     /// # An extended version of EdsCreateStreamFromFile. 
     /// Use this function when working with Unicode file names.
