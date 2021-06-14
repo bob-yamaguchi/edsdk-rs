@@ -343,8 +343,7 @@ extern "stdcall" {
     ///     written in the memory stream.
     /// # Returns:    Any of the sdk errors.
     pub fn EdsGetPointer(inStream : EdsStreamRef,
-                            outPointer : *mut c_void )->EdsError;
-// EdsVoid**               outPointer
+                            outPointer : &*mut c_void )->EdsError;
 
     /// # Reads data the size of inReadSize into the outBuffer buffer, starting at the current read or write position of the stream. 
     /// The size of data actually read can be designated in outReadSize.

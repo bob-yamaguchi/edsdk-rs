@@ -7,7 +7,8 @@ use std::vec::Vec;
 use std::result::Result;
 use std::ffi::c_void;
 use std::ffi::CStr;
-//use std::ptr::{drop_in_place};
+
+//use std::io::Write;
 
 /// Device infomation
 pub struct DeviceInfo{
@@ -32,8 +33,7 @@ pub struct Camera{
     device : *const std::ffi::c_void,
     /// # image transfer callback after remote release
     /// * `data`  slice to picture data
-    /// * `size`  size of data
-    memory_transfer_callback : Option<fn(data: &[u8], size : u64)->bool>,
+    memory_transfer_callback_func : Option<fn(data: &[u8])>,
     /// file name to save
     file_name : String,
     finish_transfer: bool
@@ -82,7 +82,7 @@ impl Library{
                             devices.push(
                                 Camera{
                                     device : device.unwrap(),
-                                    memory_transfer_callback : None,
+                                    memory_transfer_callback_func : None,
                                     file_name : String::new(),
                                     finish_transfer : false
                                 }
@@ -110,8 +110,9 @@ impl Camera{
                 let camera_ptr : *mut Camera = context as *mut Camera;
                 let camera : &mut Camera = unsafe{&mut *camera_ptr};
                 camera.finish_transfer = true;
-                if camera.memory_transfer_callback.is_some(){
+                if camera.memory_transfer_callback_func.is_some(){
                     // download image to memory stream
+                    camera.memory_transfer_callback(dir_item, dir_item_info.size);
                 }
                 else if !camera.file_name.is_empty(){
                     // download image to strage
@@ -191,50 +192,17 @@ impl Camera{
     }
     /// remote release to strage
     pub fn take_picture_to_strage(&mut self, file_name: &str)->Result<bool, ErrorId>{
+        self.memory_transfer_callback_func = None;
         self.file_name = String::from(file_name);
         self.finish_transfer = false;
-        return self.do_something_between_session(
-            ||{
-                let result = set_property_data(self.device, kEdsPropID_SaveTo, 0, 4, &(EdsSaveTo::kEdsSaveTo_Host as u32) as *const u32 as *const c_void);
-                if result.is_err(){
-                    return result;
-                }
-                let result = send_status_command(self.device, kEdsCameraStatusCommand_UILock, 0);
-                if result.is_err(){
-                    return result;
-                }
-                let result = set_capacity(self.device, 
-                    EdsCapacity{
-                        numberOfFreeClusters : 0x7FFFFFFFi32,
-                        bytesPerSector : 0x1000i32,
-                        reset : true
-                    }
-                );
-                if result.is_err(){
-                    return result;
-                }
-                let result = send_status_command(self.device, kEdsCameraStatusCommand_UIUnLock, 0);
-                if result.is_err(){
-                    return result;
-                }
-                let result = set_object_event_handler(self.device, kEdsObjectEvent_All, Camera::dir_item_request_transfer_callback, self as *const Camera as *const c_void);
-                if result.is_err(){
-                    return result;
-                }
-                let result = send_command(self.device, kEdsCameraCommand_TakePicture, 0);
-                if result.is_ok(){
-                    while !self.finish_transfer{
-                        unsafe{EdsGetEvent()};
-                        if !self.finish_transfer{
-                            std::thread::sleep(std::time::Duration::from_millis(10));
-                        }
-                    }
-                }
-                return result;
-            }
-        );
+        return self.take_picture_core();
     }
 
+    pub fn take_picture_to_memory(&mut self, processor: fn(data: &[u8]))->Result<bool, ErrorId>{
+        self.memory_transfer_callback_func = Some(processor);
+        self.finish_transfer = false;
+        return self.take_picture_core();
+    }
 
     fn do_something_between_session<F:Fn()->Result<bool, ErrorId>>(&self, function: F)->Result<bool, ErrorId>{
         let result = open_session(self.device);
@@ -289,6 +257,49 @@ impl Camera{
         let _ = close_session(self.device);
         return result;
     }
+    // common function to take picture
+    fn take_picture_core(&mut self)->Result<bool, ErrorId>{
+        return self.do_something_between_session(
+            ||{
+                let result = set_property_data(self.device, kEdsPropID_SaveTo, 0, 4, &(EdsSaveTo::kEdsSaveTo_Host as u32) as *const u32 as *const c_void);
+                if result.is_err(){
+                    return result;
+                }
+                let result = send_status_command(self.device, kEdsCameraStatusCommand_UILock, 0);
+                if result.is_err(){
+                    return result;
+                }
+                let result = set_capacity(self.device, 
+                    EdsCapacity{
+                        numberOfFreeClusters : 0x7FFFFFFFi32,
+                        bytesPerSector : 0x1000i32,
+                        reset : true
+                    }
+                );
+                if result.is_err(){
+                    return result;
+                }
+                let result = send_status_command(self.device, kEdsCameraStatusCommand_UIUnLock, 0);
+                if result.is_err(){
+                    return result;
+                }
+                let result = set_object_event_handler(self.device, kEdsObjectEvent_All, Camera::dir_item_request_transfer_callback, self as *const Camera as *const c_void);
+                if result.is_err(){
+                    return result;
+                }
+                let result = send_command(self.device, kEdsCameraCommand_TakePicture, 0);
+                if result.is_ok(){
+                    while !self.finish_transfer{
+                        unsafe{EdsGetEvent()};
+                        if !self.finish_transfer{
+                            std::thread::sleep(std::time::Duration::from_millis(10));
+                        }
+                    }
+                }
+                return result;
+            }
+        );
+    }
 
     /// save to file
     fn file_transfer_callback(&self, dir_item: *const c_void, size: u64)->bool{
@@ -298,6 +309,28 @@ impl Camera{
             let _ = download(dir_item, size, stream);
             let _ = download_complete(dir_item);
             unsafe{EdsRelease(stream)};
+        }
+        else{
+            let _ = download_cancel(dir_item);
+        }
+        return true;
+    }
+    /// save to memory
+    fn memory_transfer_callback(&self, dir_item: *const c_void, size: u64)->bool{
+        let result = create_memory_stream(size);
+        if result.is_ok(){
+            let stream = result.unwrap();
+            let _ = download(dir_item, size, stream);
+            let _ = download_complete(dir_item);
+            let data = get_pointer(stream);
+            let length = get_length(stream);
+            if data.is_ok() && length.is_ok(){
+                self.memory_transfer_callback_func.unwrap()(unsafe{std::slice::from_raw_parts(data.unwrap() as *const u8, length.unwrap() as usize)});
+            }
+            unsafe{EdsRelease(stream)};
+        }
+        else{
+            let _ = download_cancel(dir_item);
         }
         return true;
     }
@@ -530,6 +563,16 @@ fn create_file_stream(file_name : &String, create_disposition : EdsFileCreateDis
         _=>Err(onvert_error(mask_error(result)))
     }
 }
+/// EdsCreateMemoryStream wrapper
+fn create_memory_stream(buffer_size : u64)->Result<*const c_void, ErrorId>{
+    let stream : *mut c_void = std::ptr::null_mut();
+    let result = unsafe{EdsCreateMemoryStream(buffer_size, &stream)};
+    return match result{
+        EDS_ERR_OK=>Ok(stream),
+        _=>Err(onvert_error(mask_error(result)))
+    }
+}
+
 /// EdsDownload wrapper
 fn download(dir_item : *const c_void, read_size : u64, stream : EdsStreamRef)->Result<bool, ErrorId>{
     let result = unsafe{EdsDownload(dir_item, read_size, stream)};
@@ -552,6 +595,24 @@ fn download_complete(dir_item : *const c_void)->Result<bool, ErrorId>{
     let result = unsafe{EdsDownloadComplete(dir_item)};
     return match result{
         EDS_ERR_OK=>Ok(true),
+        _=>Err(onvert_error(mask_error(result)))
+    }
+}
+/// EdsGetPointer wrapper
+fn get_pointer(stream : EdsStreamRef)->Result<*const c_void, ErrorId>{
+    let data = std::ptr::null_mut();
+    let result = unsafe{EdsGetPointer(stream, &data)};
+    return match result{
+        EDS_ERR_OK=>Ok(data),
+        _=>Err(onvert_error(mask_error(result)))
+    }
+}
+/// EdsGetLength wrapper
+fn get_length(stream : EdsStreamRef)->Result<u64, ErrorId>{
+    let mut length = 0u64;
+    let result = unsafe{EdsGetLength(stream, &mut length)};
+    return match result{
+        EDS_ERR_OK=>Ok(length),
         _=>Err(onvert_error(mask_error(result)))
     }
 }
