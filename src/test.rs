@@ -187,7 +187,8 @@ mod native_tests{
 #[cfg(test)]
 mod wrapper_tests{
     use std::ffi::c_void;
-    use std::io::Write;
+    use std::io::{BufWriter, Write};
+    use std::fs::File;
     use super::super::native::edsdk_types::*;
     use super::super::types::*;
     use super::super::wrap::*;
@@ -234,6 +235,17 @@ mod wrapper_tests{
             let ch_dest = path.to_string_lossy() + "\\wrapper_tests_img.cr2";
             let result = device.take_picture_to_strage(ch_dest.as_ref());
             writeln!(&mut std::io::stdout(), "take_picture_to_strage {:?}", result).unwrap();
+
+            let result = device.take_picture_to_memory(|data|{
+                writeln!(&mut std::io::stdout(), "memory callback").unwrap();
+                let path = std::env::current_dir().unwrap();
+                let ch_dest = path.to_string_lossy() + "\\wrapper_tests_memimg.cr2";
+                let mut writer = BufWriter::new(File::create(ch_dest.as_ref()).unwrap());
+                let _ = writer.write_all(data);
+                let _ = writer.flush();
+            });
+            writeln!(&mut std::io::stdout(), "take_picture_to_memory {:?}", result).unwrap();
+
             break;
         }
     }
