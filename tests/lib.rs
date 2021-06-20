@@ -4,10 +4,10 @@
 mod native_tests{
     use std::ffi::c_void;
     use std::io::Write;
-    use super::super::native::edsdk::*;
-    use super::super::native::edsdk_types::*;
-    use super::super::native::edsdk_errors::*;
-    use super::super::types::*;
+    use edsdk::native::edsdk::*;
+    use edsdk::native::edsdk_types::*;
+    use edsdk::native::edsdk_errors::*;
+    use edsdk::types::*;
     use std::ffi::CStr;
 
     static mut EVENT_END : bool = false;
@@ -29,7 +29,7 @@ mod native_tests{
                 let result = EdsGetDirectoryItemInfo(in_ref, &mut dir_item_info);
                 writeln!(&mut std::io::stdout(), "EdsGetDirectoryItemInfo()={}", result).unwrap();
                 let path = std::env::current_dir().unwrap();
-                let ch_dest = path.to_string_lossy() + "\\native_tests_image.cr2";
+                let ch_dest = path.to_string_lossy() + "\\native_tests_strage.cr2";
                 let result = EdsCreateFileStream(ch_dest.as_ptr(), EdsFileCreateDisposition::kEdsFileCreateDisposition_CreateAlways, EdsAccess::kEdsAccess_ReadWrite, &stream);
                 writeln!(&mut std::io::stdout(), "EdsCreateFileStream({})={}", ch_dest, result).unwrap();
                 let result = EdsDownload(in_ref, dir_item_info.size, stream);
@@ -186,12 +186,11 @@ mod native_tests{
 
 #[cfg(test)]
 mod wrapper_tests{
-    use std::ffi::c_void;
     use std::io::{BufWriter, Write};
     use std::fs::File;
-    use super::super::native::edsdk_types::*;
-    use super::super::types::*;
-    use super::super::wrap::*;
+    use edsdk::native::edsdk_types::*;
+    use edsdk::types::*;
+    use edsdk::wrap::*;
 
 
     #[test]
@@ -232,19 +231,27 @@ mod wrapper_tests{
             let result = device.set_image_quality(EdsImageQuality::EdsImageQuality_LR);
             writeln!(&mut std::io::stdout(), "set_image_quality {:?}", result).unwrap();
             let path = std::env::current_dir().unwrap();
-            let ch_dest = path.to_string_lossy() + "\\wrapper_tests_img.cr2";
+            let ch_dest = path.to_string_lossy() + "\\wrapper_tests_strage.cr2";
             let result = device.take_picture_to_strage(ch_dest.as_ref());
             writeln!(&mut std::io::stdout(), "take_picture_to_strage {:?}", result).unwrap();
-
             let result = device.take_picture_to_memory(|data|{
                 writeln!(&mut std::io::stdout(), "memory callback").unwrap();
                 let path = std::env::current_dir().unwrap();
-                let ch_dest = path.to_string_lossy() + "\\wrapper_tests_memimg.cr2";
+                let ch_dest = path.to_string_lossy() + "\\wrapper_tests_mem.cr2";
                 let mut writer = BufWriter::new(File::create(ch_dest.as_ref()).unwrap());
                 let _ = writer.write_all(data);
                 let _ = writer.flush();
             });
             writeln!(&mut std::io::stdout(), "take_picture_to_memory {:?}", result).unwrap();
+            let result = device.take_live_preview(|data|{
+                writeln!(&mut std::io::stdout(), "memory callback").unwrap();
+                let path = std::env::current_dir().unwrap();
+                let ch_dest = path.to_string_lossy() + "\\wrapper_tests_live.jpg";
+                let mut writer = BufWriter::new(File::create(ch_dest.as_ref()).unwrap());
+                let _ = writer.write_all(data);
+                let _ = writer.flush();
+            });
+            writeln!(&mut std::io::stdout(), "take_live_preview {:?}", result).unwrap();
 
             break;
         }
