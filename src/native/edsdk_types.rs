@@ -40,6 +40,7 @@ pub type EdsEvfImageMutRef = EdsBaseMutRef;
 
 /// Data Types
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsDataType
 {
     kEdsDataType_Unknown           = 0u32,
@@ -72,6 +73,9 @@ pub enum EdsDataType
 
     kEdsDataType_FocusInfo         = 101u32,
     kEdsDataType_PictureStyleDesc,
+}
+impl Default for EdsDataType {
+    fn default() -> Self { EdsDataType::kEdsDataType_Unknown }
 }
 
 /// Property IDs
@@ -214,13 +218,18 @@ pub const kEdsCameraCommand_DoClickWBEvf        : EdsCameraCommand = 0x00000104u
 pub const kEdsCameraCommand_PressShutterButton  : EdsCameraCommand = 0x00000004u32;
 
 #[repr(i32)]
+#[derive(Debug)]
 pub enum EdsEvfAf
 {
 	kEdsCameraCommand_EvfAf_OFF    = 0i32,
 	kEdsCameraCommand_EvfAf_ON     = 1i32,
 }
+impl Default for EdsEvfAf {
+    fn default() -> Self { EdsEvfAf::kEdsCameraCommand_EvfAf_OFF }
+}
 
 #[repr(i32)]
+#[derive(Debug)]
 pub enum EdsShutterButton
 {
 	kEdsCameraCommand_ShutterButton_OFF                = 0x00000000i32,
@@ -228,6 +237,9 @@ pub enum EdsShutterButton
 	kEdsCameraCommand_ShutterButton_Completely         = 0x00000003i32,
 	kEdsCameraCommand_ShutterButton_Halfway_NonAF      = 0x00010001i32,
 	kEdsCameraCommand_ShutterButton_Completely_NonAF   = 0x00010003i32,
+}
+impl Default for EdsShutterButton {
+    fn default() -> Self { EdsShutterButton::kEdsCameraCommand_ShutterButton_OFF }
 }
 
 pub type EdsCameraStatusCommand = u32;
@@ -413,6 +425,7 @@ pub const kEdsStateEvent_BulbExposureTime   : EdsStateEvent = 0x00000310u32;
 
 /// Drive Lens
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsEvfDriveLens
 {
 	kEdsEvfDriveLens_Near1 = 0x00000001u32,
@@ -422,26 +435,38 @@ pub enum EdsEvfDriveLens
 	kEdsEvfDriveLens_Far2  = 0x00008002u32,
 	kEdsEvfDriveLens_Far3  = 0x00008003u32,
 }
+impl Default for EdsEvfDriveLens {
+    fn default() -> Self { EdsEvfDriveLens::kEdsEvfDriveLens_Near1 }
+}
 
 /// Depth of Field Preview
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsEvfDepthOfFieldPreview
 {
 	kEdsEvfDepthOfFieldPreview_OFF = 0x00000000u32,
 	kEdsEvfDepthOfFieldPreview_ON  = 0x00000001u32,
 }
+impl Default for EdsEvfDepthOfFieldPreview {
+    fn default() -> Self { EdsEvfDepthOfFieldPreview::kEdsEvfDepthOfFieldPreview_OFF }
+}
 
 /// Stream Seek Origins
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsSeekOrigin
 {
     kEdsSeek_Cur   = 0u32,
     kEdsSeek_Begin = 1u32,
     kEdsSeek_End   = 2u32,
 }
+impl Default for EdsSeekOrigin {
+    fn default() -> Self { EdsSeekOrigin::kEdsSeek_Cur }
+}
 
 /// File and Propaties Access
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsAccess
 {
     kEdsAccess_Read        = 0u32,
@@ -449,9 +474,13 @@ pub enum EdsAccess
     kEdsAccess_ReadWrite   = 2u32,
     kEdsAccess_Error       = 0xFFFFFFFFu32,
 }
+impl Default for EdsAccess {
+    fn default() -> Self { EdsAccess::kEdsAccess_Error }
+}
 
 /// File Create Disposition
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsFileCreateDisposition
 {
     kEdsFileCreateDisposition_CreateNew            = 0u32,
@@ -460,9 +489,13 @@ pub enum EdsFileCreateDisposition
     kEdsFileCreateDisposition_OpenAlways           = 3u32,
     kEdsFileCreateDisposition_TruncateExsisting    = 4u32,
 }
+impl Default for EdsFileCreateDisposition {
+    fn default() -> Self { EdsFileCreateDisposition::kEdsFileCreateDisposition_CreateNew }
+}
 
 /// Image Types
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsImageType
 {
     kEdsImageType_Unknown  = 0x00000000u32,
@@ -471,9 +504,13 @@ pub enum EdsImageType
     kEdsImageType_RAW      = 0x00000004u32,
     kEdsImageType_CR2      = 0x00000006u32,
 }
+impl Default for EdsImageType {
+    fn default() -> Self { EdsImageType::kEdsImageType_Unknown }
+}
 
 /// Image Size
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsImageSize
 {
     kEdsImageSize_Large    = 0u32,
@@ -486,9 +523,13 @@ pub enum EdsImageSize
     kEdsImageSize_Small3   = 16u32,
 	kEdsImageSize_Unknown  = 0xffffffffu32,
 }
+impl Default for EdsImageSize {
+    fn default() -> Self { EdsImageSize::kEdsImageSize_Unknown }
+}
 
 /// Image Compress Quality
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsCompressQuality
 {
     kEdsCompressQuality_Normal     = 2u32,
@@ -497,9 +538,13 @@ pub enum EdsCompressQuality
     kEdsCompressQuality_SuperFine  = 5u32,
     kEdsCompressQuality_Unknown    = 0xffffffffu32,
 }
+impl Default for EdsCompressQuality {
+    fn default() -> Self { EdsCompressQuality::kEdsCompressQuality_Unknown }
+}
 
 /// Image Quality
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsImageQuality
 {
 	/* Jpeg Only */
@@ -574,8 +619,12 @@ pub enum EdsImageQuality
 
 	EdsImageQuality_Unknown    = 0xffffffffu32,
 }
+impl Default for EdsImageQuality {
+    fn default() -> Self { EdsImageQuality::EdsImageQuality_Unknown }
+}
 
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsImageQualityForLegacy
 {
 	kEdsImageQualityForLegacy_LJ       =	0x001f000fu32,	/* Jpeg Large */
@@ -605,9 +654,13 @@ pub enum EdsImageQualityForLegacy
 
 	kEdsImageQualityForLegacy_Unknown  = 0xffffffffu32,
 }
+impl Default for EdsImageQualityForLegacy {
+    fn default() -> Self { EdsImageQualityForLegacy::kEdsImageQualityForLegacy_Unknown }
+}
 
 /// Image Source
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsImageSource
 {
     kEdsImageSrc_FullView      = 0u32,
@@ -616,9 +669,13 @@ pub enum EdsImageSource
     kEdsImageSrc_RAWThumbnail  = 3u32,
     kEdsImageSrc_RAWFullView   = 4u32,
 }
+impl Default for EdsImageSource {
+    fn default() -> Self { EdsImageSource::kEdsImageSrc_FullView }
+}
 
 /// Target Image Types
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsTargetImageType
 {
     kEdsTargetImageType_Unknown    = 0x00000000u32,
@@ -629,18 +686,26 @@ pub enum EdsTargetImageType
     kEdsTargetImageType_RGB16      = 0x0000000Au32,
     kEdsTargetImageType_DIB        = 0x0000000Bu32
 }
+impl Default for EdsTargetImageType {
+    fn default() -> Self { EdsTargetImageType::kEdsTargetImageType_Unknown }
+}
 
 /// Progress Option
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsProgressOption
 {
     kEdsProgressOption_NoReport        = 0u32,
     kEdsProgressOption_Done            = 1u32,
     kEdsProgressOption_Periodically    = 2u32,
 }
+impl Default for EdsProgressOption {
+    fn default() -> Self { EdsProgressOption::kEdsProgressOption_NoReport }
+}
 
 /// File attribute
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsFileAttributes
 {
     kEdsFileAttribute_Normal   = 0x00000000u32,
@@ -649,9 +714,13 @@ pub enum EdsFileAttributes
     kEdsFileAttribute_System   = 0x00000004u32,
     kEdsFileAttribute_Archive  = 0x00000020u32,
 }
+impl Default for EdsFileAttributes {
+    fn default() -> Self { EdsFileAttributes::kEdsFileAttribute_Normal }
+}
 
 /// Battery level
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsBatteryLevel2
 {
    kEdsBatteryLevel2_Empty     = 0u32,
@@ -664,18 +733,26 @@ pub enum EdsBatteryLevel2
  //  kEdsBatteryLevel2_BCLevel   = 0u32,
    kEdsBatteryLevel2_AC        = 0xFFFFFFFFu32,
 }
+impl Default for EdsBatteryLevel2 {
+    fn default() -> Self { EdsBatteryLevel2::kEdsBatteryLevel2_Empty }
+}
 
 /// Save To
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsSaveTo
 {
     kEdsSaveTo_Camera  = 1u32,
     kEdsSaveTo_Host    = 2u32,
     kEdsSaveTo_Both    = (EdsSaveTo::kEdsSaveTo_Camera as u32) | (EdsSaveTo::kEdsSaveTo_Host as u32),
 }
+impl Default for EdsSaveTo {
+    fn default() -> Self { EdsSaveTo::kEdsSaveTo_Camera }
+}
 
 /// StorageType
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsStorageType
 {
     kEdsStorageType_Non    = 0u32,
@@ -684,9 +761,13 @@ pub enum EdsStorageType
     kEdsStorageType_HD     = 4u32,
 	kEdsStorageType_CFast  = 5u32,
 }
+impl Default for EdsStorageType {
+    fn default() -> Self { EdsStorageType::kEdsStorageType_Non }
+}
 
 /// White Balance
 #[repr(i32)]
+#[derive(Debug)]
 pub enum EdsWhiteBalance
 {
     kEdsWhiteBalance_Auto          = 0i32,
@@ -711,18 +792,25 @@ pub enum EdsWhiteBalance
 	kEdsWhiteBalance_Click         = -1i32,
     kEdsWhiteBalance_Pasted        = -2i32,
 }
+impl Default for EdsWhiteBalance {
+    fn default() -> Self { EdsWhiteBalance::kEdsWhiteBalance_Auto }
+}
 
 /// Photo Effects
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsPhotoEffect
 {
     kEdsPhotoEffect_Off        = 0u32,
     kEdsPhotoEffect_Monochrome = 5u32,
-
+}
+impl Default for EdsPhotoEffect {
+    fn default() -> Self { EdsPhotoEffect::kEdsPhotoEffect_Off }
 }
 
 /// Color Matrix
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsColorMatrix
 {
     kEdsColorMatrix_Custom = 0u32,
@@ -734,9 +822,13 @@ pub enum EdsColorMatrix
     kEdsColorMatrix_6      = 6u32,
     kEdsColorMatrix_7      = 7u32,
 }
+impl Default for EdsColorMatrix {
+    fn default() -> Self { EdsColorMatrix::kEdsColorMatrix_Custom }
+}
 
 /// Filter Effects
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsFilterEffect
 {
     kEdsFilterEffect_None      = 0u32,
@@ -745,9 +837,13 @@ pub enum EdsFilterEffect
     kEdsFilterEffect_Red       = 3u32,
     kEdsFilterEffect_Green     = 4u32,
 }
+impl Default for EdsFilterEffect {
+    fn default() -> Self { EdsFilterEffect::kEdsFilterEffect_None }
+}
 
 /// Toning Effects
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsTonigEffect
 {
     kEdsTonigEffect_None   = 0u32,
@@ -756,18 +852,26 @@ pub enum EdsTonigEffect
     kEdsTonigEffect_Purple = 3u32,
     kEdsTonigEffect_Green  = 4u32,
 }
+impl Default for EdsTonigEffect {
+    fn default() -> Self { EdsTonigEffect::kEdsTonigEffect_None }
+}
 
 /// Color Space
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsColorSpace
 {
     kEdsColorSpace_sRGB        = 1u32,
     kEdsColorSpace_AdobeRGB    = 2u32,
     kEdsColorSpace_Unknown     = 0xffffffffu32,
 }
+impl Default for EdsColorSpace {
+    fn default() -> Self { EdsColorSpace::kEdsColorSpace_Unknown }
+}
 
 /// PictureStyle
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsPictureStyle
 {
     kEdsPictureStyle_Standard      = 0x0081u32,
@@ -785,18 +889,26 @@ pub enum EdsPictureStyle
     kEdsPictureStyle_PC2           = 0x0042u32,
     kEdsPictureStyle_PC3           = 0x0043u32,
 }
+impl Default for EdsPictureStyle {
+    fn default() -> Self { EdsPictureStyle::kEdsPictureStyle_Standard }
+}
 
 /// Transfer Option
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsTransferOption 
 {
     kEdsTransferOption_ByDirectTransfer    = 1u32,
     kEdsTransferOption_ByRelease           = 2u32,
     kEdsTransferOption_ToDesktop           = 0x00000100u32,
 }
+impl Default for EdsTransferOption {
+    fn default() -> Self { EdsTransferOption::kEdsTransferOption_ByDirectTransfer }
+}
 
 /// AE Mode
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsAEMode
 {
     kEdsAEMode_Program                 = 0u32,
@@ -843,9 +955,13 @@ pub enum EdsAEMode
 	kEdsAEMode_Movie_Mini              = 44u32,
 	kEdsAEMode_Unknown                 = 0xffffffffu32,
 }
+impl Default for EdsAEMode {
+    fn default() -> Self { EdsAEMode::kEdsAEMode_Unknown }
+}
 
 /// Bracket
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsBracket
 {
     kEdsBracket_AEB        = 0x01u32,
@@ -854,9 +970,13 @@ pub enum EdsBracket
     kEdsBracket_FEB        = 0x08u32,
     kEdsBracket_Unknown    = 0xffffffffu32,
 }
+impl Default for EdsBracket {
+    fn default() -> Self { EdsBracket::kEdsBracket_Unknown }
+}
 
 /// EVF Output Device [Flag]
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsEvfOutputDevice
 {
 	kEdsEvfOutputDevice_TFT        = 1u32,
@@ -864,18 +984,26 @@ pub enum EdsEvfOutputDevice
 	kEdsEvfOutputDevice_MOBILE     = 4u32,
 	kEdsEvfOutputDevice_MOBILE2    = 8u32,
 }
+impl Default for EdsEvfOutputDevice {
+    fn default() -> Self { EdsEvfOutputDevice::kEdsEvfOutputDevice_TFT }
+}
 
 /// EVF Zoom
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsEvfZoom
 {
 	kEdsEvfZoom_Fit    = 1u32,
 	kEdsEvfZoom_x5     = 5u32,
 	kEdsEvfZoom_x10    = 10u32,
 }
+impl Default for EdsEvfZoom {
+    fn default() -> Self { EdsEvfZoom::kEdsEvfZoom_Fit }
+}
 
 /// EVF AF Mode
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsEvfAFMode
 {
 	Evf_AFMode_Quick       = 0u32,
@@ -883,9 +1011,13 @@ pub enum EdsEvfAFMode
 	Evf_AFMode_LiveFace    = 2u32,
 	Evf_AFMode_LiveMulti   = 3u32,
 }
+impl Default for EdsEvfAFMode {
+    fn default() -> Self { EdsEvfAFMode::Evf_AFMode_Quick }
+}
 
 /// Strobo Mode
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsStroboMode
 {
 	kEdsStroboModeInternal         = 0u32,
@@ -896,13 +1028,20 @@ pub enum EdsStroboMode
 	kEdsStroboModeExternalManual   = 5u32,
 	kEdsStroboModeManual           = 6u32,
 }
+impl Default for EdsStroboMode {
+    fn default() -> Self { EdsStroboMode::kEdsStroboModeInternal }
+}
 
 /// ETTL-II Mode
 #[repr(u32)]
+#[derive(Debug)]
 pub enum EdsETTL2Mode
 {
 	kEdsETTL2ModeEvaluative    = 0u32,
 	kEdsETTL2ModeAverage       = 1u32,
+}
+impl Default for EdsETTL2Mode {
+    fn default() -> Self { EdsETTL2Mode::kEdsETTL2ModeEvaluative }
 }
 
 // Definition of base Structures

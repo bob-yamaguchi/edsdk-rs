@@ -27,16 +27,262 @@ pub struct DirectoryItemInfo
     pub file_name   : String
 }
 #[derive(Debug)]
-struct Session{
-    pub session_device  : EdsCameraRef
+pub struct Session{
+    device  : EdsCameraRef,
 }
+
+struct TakePicturesContext{
+    /// # image transfer callback after remote release
+    /// * `data`  slice to picture data
+    memory_transfer_callback_func : Option<fn(data: &[u8])>,
+    /// file name to save
+    file_name : String,
+    finish_transfer: bool
+}
+
+impl Session{
+    /// callback function
+    #[allow(non_upper_case_globals)]
+    extern "C" fn dir_item_request_transfer_callback(event: u32, dir_item: EdsBaseRef, context: *const c_void)->EdsError{
+        match event{
+            kEdsObjectEvent_DirItemRequestTransfer=>{
+                let dir_item_info = get_directory_item_info(dir_item);
+                if dir_item_info.is_err(){
+                    return EDS_ERR_OK;
+                }
+                let dir_item_info = dir_item_info.unwrap();
+                let context_ptr = context as *mut TakePicturesContext;
+                let context_ref : &mut TakePicturesContext = unsafe{&mut *context_ptr};
+                context_ref.finish_transfer = true;
+                if context_ref.memory_transfer_callback_func.is_some(){
+                    // download image to memory stream
+                    Self::sub_memory_transfer(context_ref, dir_item, dir_item_info.size);
+                }
+                else if !context_ref.file_name.is_empty(){
+                    // download image to strage
+                    Self::sub_file_transfer(context_ref, dir_item, dir_item_info.size);
+                }
+            },
+            _=>{}
+        }
+
+        unsafe{EdsRelease(dir_item)};
+        return EDS_ERR_OK;
+    }
+    /// save to file
+    fn sub_file_transfer(context : &TakePicturesContext, dir_item: EdsDirectoryItemRef, size: u64){
+        let result = create_file_stream_scoped(&context.file_name, EdsFileCreateDisposition::kEdsFileCreateDisposition_CreateAlways, EdsAccess::kEdsAccess_ReadWrite);
+        if result.is_ok(){
+            let stream = result.unwrap();
+            let _ = download(dir_item, size, stream.stream);
+            let _ = download_complete(dir_item);
+        }
+        else{
+            let _ = download_cancel(dir_item);
+        }
+    }
+    /// save to memory
+    fn sub_memory_transfer(context : &TakePicturesContext, dir_item: EdsDirectoryItemRef, size: u64){
+        let result = create_memory_stream_scoped(size);
+        if result.is_ok(){
+            let stream = result.unwrap();
+            let _ = download(dir_item, size, stream.stream);
+            let _ = download_complete(dir_item);
+            let data = get_pointer(stream.stream);
+            let length = get_length(stream.stream);
+            if data.is_ok() && length.is_ok(){
+                context.memory_transfer_callback_func.unwrap()(unsafe{std::slice::from_raw_parts(data.unwrap() as *const u8, length.unwrap() as usize)});
+            }
+        }
+        else{
+            let _ = download_cancel(dir_item);
+        }
+    }
+    /// get iso speed desc
+    pub fn get_iso_speed_desc(&self)->Result<Vec<ISOSpeed>, ErrorId>{
+        let converter = |v| unsafe { ::std::mem::transmute(v) };
+        return self.get_4bytes_desc(kEdsPropID_ISOSpeed, converter);
+    }
+    /// get iso speed
+    pub fn get_iso_speed(&self)->Result<ISOSpeed, ErrorId>{
+        return get_property_data::<ISOSpeed>(self.device, kEdsPropID_ISOSpeed, 0);
+    }
+    // set iso speed
+    pub fn set_iso_speed(&self, iso_speed : ISOSpeed)->Result<bool, ErrorId>{
+        return set_property_data(self.device, kEdsPropID_ISOSpeed, 0, &(iso_speed as u32));
+    }
+    /// get Av desc
+    pub fn get_av_desc(&self)->Result<Vec<ApertureValue>, ErrorId>{
+        let converter = |v| unsafe { ::std::mem::transmute(v) };
+        return self.get_4bytes_desc(kEdsPropID_Av, converter);
+    }
+    /// get Av
+    pub fn get_av(&self)->Result<ApertureValue, ErrorId>{
+        return get_property_data::<ApertureValue>(self.device, kEdsPropID_Av, 0);
+    }
+    /// set Av
+    pub fn set_av(&self, av : ApertureValue)->Result<bool, ErrorId>{
+        return set_property_data(self.device, kEdsPropID_Av, 0, &(av as u32));
+    }
+    /// get Tv desc
+    pub fn get_tv_desc(&self)->Result<Vec<ShutterSpeed>, ErrorId>{
+        let converter = |v| unsafe { ::std::mem::transmute(v) };
+        return self.get_4bytes_desc(kEdsPropID_Tv, converter);
+    }
+    /// get Tv
+    pub fn get_tv(&self)->Result<ShutterSpeed, ErrorId>{
+        return get_property_data::<ShutterSpeed>(self.device, kEdsPropID_Tv, 0);
+    }
+    /// set Tv
+    pub fn set_tv(&self, tv : ShutterSpeed)->Result<bool, ErrorId>{
+        return set_property_data(self.device, kEdsPropID_Tv, 0, &(tv as u32));
+    }
+    /// get battery level
+    pub fn get_battery_level(&self)->Result<EdsBatteryLevel2, ErrorId>{
+        return get_property_data::<EdsBatteryLevel2>(self.device, kEdsPropID_BatteryLevel, 0);
+    }
+    /// get image quality desc
+    pub fn get_image_quality_desc(&self)->Result<Vec<EdsImageQuality>, ErrorId>{
+        let converter = |v| unsafe { ::std::mem::transmute(v) };
+        return self.get_4bytes_desc(kEdsPropID_ImageQuality, converter);
+    }
+    /// get image quality
+    pub fn get_image_quality(&self)->Result<EdsImageQuality, ErrorId>{
+        return get_property_data::<EdsImageQuality>(self.device, kEdsPropID_ImageQuality, 0);
+    }
+    /// set image quality
+    pub fn set_image_quality(&self, image_quality : EdsImageQuality)->Result<bool, ErrorId>{
+        return set_property_data(self.device, kEdsPropID_ImageQuality, 0, &(image_quality as u32));
+    }
+    /// remote release to strage
+    pub fn take_picture_to_strage(&mut self, file_name: &str)->Result<bool, ErrorId>{
+        return self.take_picture_core(&mut TakePicturesContext{
+            memory_transfer_callback_func: None,
+            file_name: String::from(file_name),
+            finish_transfer: false,
+        });
+    }
+    /// remote release to memory
+    pub fn take_picture_to_memory(&mut self, processor: fn(data: &[u8]))->Result<bool, ErrorId>{
+        return self.take_picture_core(&mut TakePicturesContext{
+            memory_transfer_callback_func: Some(processor),
+            file_name: String::new(),
+            finish_transfer: false,
+        });
+    }
+
+    /// get live preview
+    pub fn take_live_preview(&mut self, processor: fn(data: &[u8]))->Result<bool, ErrorId>{
+        let evf_mode = EdsEvfAf::kEdsCameraCommand_EvfAf_ON as i32;
+        let result = set_property_data(self.device, kEdsPropID_Evf_Mode, 0, &evf_mode);
+        if result.is_err(){
+            return Err(result.unwrap_err());
+        }
+        let result = get_property_data::<i32>(self.device, kEdsPropID_Evf_OutputDevice, 0);
+        if result.is_err(){
+            return Err(result.unwrap_err());
+        }
+        let mut out_device = result.unwrap();
+        out_device |= EdsEvfOutputDevice::kEdsEvfOutputDevice_PC as i32;
+        let result = set_property_data(self.device, kEdsPropID_Evf_OutputDevice, 0, &out_device);
+        if result.is_err(){
+            return Err(result.unwrap_err());
+        }
+        let result = create_memory_stream_scoped(0u64);
+        if result.is_err(){
+            return Err(result.unwrap_err());
+        }
+        let stream = result.unwrap();
+        {
+            let result = create_evf_image_ref_scoped(stream.stream);
+            if result.is_err(){
+                return Err(result.unwrap_err());
+            }
+            let image_ref = result.unwrap();
+            loop{
+                let result = download_evf_image(self.device, image_ref.image_ref);
+                match result{
+                    Err(ErrorId::ObjectNotReady)=>{
+                        std::thread::sleep(std::time::Duration::from_millis(10));
+                        continue;
+                    },
+                    Ok(true)=>{break},
+                    _=>return Err(result.unwrap_err())
+                }
+            }
+            let data = get_pointer(stream.stream);
+            let length = get_length(stream.stream);
+            if data.is_ok() && length.is_ok(){
+                processor(unsafe{std::slice::from_raw_parts(data.unwrap() as *const u8, length.unwrap() as usize)});
+            }
+        }
+        Ok(true)
+    }
+
+    /// get 4 bytes desc
+    fn get_4bytes_desc<T, F: Fn(i32)->T>(&self, property_id : u32, converter: F)->Result<Vec<T>, ErrorId>{
+        let result = get_property_desc(self.device, property_id);
+        if result.is_ok(){
+            let result = result.unwrap();
+            let mut desc = Vec::with_capacity(result.len());
+            for v in result{
+                desc.push(converter(v));
+            }
+            Ok(desc)
+        }
+        else{
+            Err(result.unwrap_err())
+        }
+    }
+    // common function to take picture
+    fn take_picture_core(&mut self, context : &mut TakePicturesContext)->Result<bool, ErrorId>{
+        let result = set_property_data(self.device, kEdsPropID_SaveTo, 0, &(EdsSaveTo::kEdsSaveTo_Host as u32));
+        if result.is_err(){
+            return result;
+        }
+        let result = send_status_command(self.device, kEdsCameraStatusCommand_UILock, 0);
+        if result.is_err(){
+            return result;
+        }
+        let result = set_capacity(self.device, 
+            EdsCapacity{
+                numberOfFreeClusters : 0x7FFFFFFFi32,
+                bytesPerSector : 0x1000i32,
+                reset : true
+            }
+        );
+        if result.is_err(){
+            return result;
+        }
+        let result = send_status_command(self.device, kEdsCameraStatusCommand_UIUnLock, 0);
+        if result.is_err(){
+            return result;
+        }
+        let result = set_object_event_handler(self.device, kEdsObjectEvent_All, Self::dir_item_request_transfer_callback, context as *const TakePicturesContext as *const c_void);
+        if result.is_err(){
+            return result;
+        }
+        let result = send_command(self.device, kEdsCameraCommand_TakePicture, 0);
+        if result.is_ok(){
+            while !context.finish_transfer{
+                unsafe{EdsGetEvent()};
+                if !context.finish_transfer{
+                    std::thread::sleep(std::time::Duration::from_millis(10));
+                }
+            }
+        }
+        return result;
+    }
+}
+
 impl Drop for Session{
     fn drop(&mut self){
-        if self.session_device != std::ptr::null(){
-            unsafe{EdsCloseSession(self.session_device)};
+        if self.device != std::ptr::null(){
+            let _ = close_session(self.device);
         }
     }
 }
+
 #[derive(Debug)]
 struct ScopedStream
 {
@@ -66,12 +312,31 @@ impl Drop for ScopedEvfImageRef{
 pub struct Camera{
     /// internal object
     device : EdsCameraRef,
-    /// # image transfer callback after remote release
-    /// * `data`  slice to picture data
-    memory_transfer_callback_func : Option<fn(data: &[u8])>,
-    /// file name to save
-    file_name : String,
-    finish_transfer: bool
+}
+impl Camera{
+    /// get device info
+    pub fn get_device_info(&self)->Result<DeviceInfo, ErrorId>{
+        return get_device_info(self.device);
+    }
+    /// open session
+    pub fn open_session(&self)->Result<Session, ErrorId>{
+        let result = open_session(self.device);
+        return match result{
+            Ok(true)=>Ok(
+                Session{
+                    device : self.device,
+                }),
+            _=>Err(result.unwrap_err())
+        }
+    }
+}
+
+impl Drop for Camera{
+    fn drop(&mut self){
+        if self.device != std::ptr::null_mut(){
+            unsafe{EdsRelease(self.device);}
+        }
+    }
 }
 
 /// Edsdk wrapper
@@ -117,9 +382,6 @@ impl Library{
                             devices.push(
                                 Camera{
                                     device : device.unwrap(),
-                                    memory_transfer_callback_func : None,
-                                    file_name : String::new(),
-                                    finish_transfer : false
                                 }
                             );
                         }
@@ -131,298 +393,6 @@ impl Library{
     }
 }
 
-impl Camera{
-    /// callback function
-    #[allow(non_upper_case_globals)]
-    extern "C" fn dir_item_request_transfer_callback(event: u32, dir_item: EdsBaseRef, context: *const c_void)->EdsError{
-        match event{
-            kEdsObjectEvent_DirItemRequestTransfer=>{
-                let dir_item_info = get_directory_item_info(dir_item);
-                if dir_item_info.is_err(){
-                    return EDS_ERR_OK;
-                }
-                let dir_item_info = dir_item_info.unwrap();
-                let camera_ptr : *mut Camera = context as *mut Camera;
-                let camera : &mut Camera = unsafe{&mut *camera_ptr};
-                camera.finish_transfer = true;
-                if camera.memory_transfer_callback_func.is_some(){
-                    // download image to memory stream
-                    camera.memory_transfer_callback(dir_item, dir_item_info.size);
-                }
-                else if !camera.file_name.is_empty(){
-                    // download image to strage
-                    camera.file_transfer_callback(dir_item, dir_item_info.size);
-                }
-            },
-            _=>{}
-        }
-
-        unsafe{EdsRelease(dir_item)};
-        return EDS_ERR_OK;
-    }
-    /// get device info
-    pub fn get_device_info(&self)->Result<DeviceInfo, ErrorId>{
-        return get_device_info(self.device);
-    }
-    /// get iso speed desc
-    pub fn get_iso_speed_desc(&self)->Result<Vec<ISOSpeed>, ErrorId>{
-        let converter = |v| unsafe { ::std::mem::transmute(v) };
-        return self.get_4bytes_desc(kEdsPropID_ISOSpeed, converter);
-    }
-    /// get iso speed
-    pub fn get_iso_speed(&self)->Result<ISOSpeed, ErrorId>{
-        let converter = |v| unsafe { ::std::mem::transmute(v) };
-        return self.get_4bytes_property(kEdsPropID_ISOSpeed, converter);
-    }
-    // set iso speed
-    pub fn set_iso_speed(&self, iso_speed : ISOSpeed)->Result<bool, ErrorId>{
-        return self.set_4bytes_property(kEdsPropID_ISOSpeed, iso_speed as u32);
-    }
-    /// get Av desc
-    pub fn get_av_desc(&self)->Result<Vec<ApertureValue>, ErrorId>{
-        let converter = |v| unsafe { ::std::mem::transmute(v) };
-        return self.get_4bytes_desc(kEdsPropID_Av, converter);
-    }
-    /// get Av
-    pub fn get_av(&self)->Result<ApertureValue, ErrorId>{
-        let converter = |v| unsafe { ::std::mem::transmute(v) };
-        return self.get_4bytes_property(kEdsPropID_Av, converter);
-    }
-    /// set Av
-    pub fn set_av(&self, av : ApertureValue)->Result<bool, ErrorId>{
-        return self.set_4bytes_property(kEdsPropID_Av, av as u32);
-    }
-    /// get Tv desc
-    pub fn get_tv_desc(&self)->Result<Vec<ShutterSpeed>, ErrorId>{
-        let converter = |v| unsafe { ::std::mem::transmute(v) };
-        return self.get_4bytes_desc(kEdsPropID_Tv, converter);
-    }
-    /// get Tv
-    pub fn get_tv(&self)->Result<ShutterSpeed, ErrorId>{
-        let converter = |v| unsafe { ::std::mem::transmute(v) };
-        return self.get_4bytes_property(kEdsPropID_Tv, converter);
-    }
-    /// set Tv
-    pub fn set_tv(&self, tv : ShutterSpeed)->Result<bool, ErrorId>{
-        return self.set_4bytes_property(kEdsPropID_Tv, tv as u32);
-    }
-    /// get battery level
-    pub fn get_battery_level(&self)->Result<EdsBatteryLevel2, ErrorId>{
-        let converter = |v| unsafe { ::std::mem::transmute(v) };
-        return self.get_4bytes_property(kEdsPropID_BatteryLevel, converter);
-    }
-    /// get image quality desc
-    pub fn get_image_quality_desc(&self)->Result<Vec<EdsImageQuality>, ErrorId>{
-        let converter = |v| unsafe { ::std::mem::transmute(v) };
-        return self.get_4bytes_desc(kEdsPropID_ImageQuality, converter);
-    }
-    /// get image quality
-    pub fn get_image_quality(&self)->Result<EdsImageQuality, ErrorId>{
-        let converter = |v| unsafe { ::std::mem::transmute(v) };
-        return self.get_4bytes_property(kEdsPropID_ImageQuality, converter);
-    }
-    /// set image quality
-    pub fn set_image_quality(&self, image_quality : EdsImageQuality)->Result<bool, ErrorId>{
-        return self.set_4bytes_property(kEdsPropID_ImageQuality, image_quality as u32);
-    }
-    /// remote release to strage
-    pub fn take_picture_to_strage(&mut self, file_name: &str)->Result<bool, ErrorId>{
-        self.memory_transfer_callback_func = None;
-        self.file_name = String::from(file_name);
-        self.finish_transfer = false;
-        return self.take_picture_core();
-    }
-    /// remote release to memory
-    pub fn take_picture_to_memory(&mut self, processor: fn(data: &[u8]))->Result<bool, ErrorId>{
-        self.memory_transfer_callback_func = Some(processor);
-        self.finish_transfer = false;
-        return self.take_picture_core();
-    }
-
-    /// get live preview
-    pub fn take_live_preview(&mut self, processor: fn(data: &[u8]))->Result<bool, ErrorId>{
-        let session = open_session_scoped(self.device);
-        if session.is_err(){
-            return Err(session.unwrap_err());
-        }
-        {
-            let evf_mode = EdsEvfAf::kEdsCameraCommand_EvfAf_ON as i32;
-            let result = set_property_data_(self.device, kEdsPropID_Evf_Mode, 0, &evf_mode);
-            if result.is_err(){
-                return Err(result.unwrap_err());
-            }
-            let result = get_property_data::<i32>(self.device, kEdsPropID_Evf_OutputDevice, 0);
-            if result.is_err(){
-                return Err(result.unwrap_err());
-            }
-            let mut out_device = result.unwrap();
-            out_device |= EdsEvfOutputDevice::kEdsEvfOutputDevice_PC as i32;
-            let result = set_property_data_(self.device, kEdsPropID_Evf_OutputDevice, 0, &out_device);
-            if result.is_err(){
-                return Err(result.unwrap_err());
-            }
-            let result = create_memory_stream_scoped(0u64);
-            if result.is_err(){
-                return Err(result.unwrap_err());
-            }
-            let stream = result.unwrap();
-            {
-                let result = create_evf_image_ref_scoped(stream.stream);
-                if result.is_err(){
-                    return Err(result.unwrap_err());
-                }
-                let image_ref = result.unwrap();
-                loop{
-                    let result = download_evf_image(self.device, image_ref.image_ref);
-                    match result{
-                        Err(ErrorId::ObjectNotReady)=>{
-                            std::thread::sleep(std::time::Duration::from_millis(10));
-                            continue;
-                        },
-                        Ok(true)=>{break},
-                        _=>return Err(result.unwrap_err())
-                    }
-                }
-                let data = get_pointer(stream.stream);
-                let length = get_length(stream.stream);
-                if data.is_ok() && length.is_ok(){
-                    processor(unsafe{std::slice::from_raw_parts(data.unwrap() as *const u8, length.unwrap() as usize)});
-                }
-            }
-        }
-        Ok(true)
-    }
-
-    /// get 4 bytes desc
-    fn get_4bytes_desc<T, F: Fn(i32)->T>(&self, property_id : u32, converter: F)->Result<Vec<T>, ErrorId>{
-        let result = open_session_scoped(self.device);
-        if result.is_err(){
-            return Err(result.unwrap_err());
-        }
-        let result = get_property_desc(self.device, property_id);
-        if result.is_ok(){
-            let result = result.unwrap();
-            let mut desc = Vec::with_capacity(result.len());
-            for v in result{
-                desc.push(converter(v));
-            }
-            Ok(desc)
-        }
-        else{
-            Err(result.unwrap_err())
-        }
-    }
-    /// get 4 bytes property
-    fn get_4bytes_property<T, F: Fn(i32)->T>(&self, property_id : u32, converter: F)->Result<T, ErrorId>
-    {
-        let result = open_session_scoped(self.device);
-        if result.is_err(){
-            return Err(result.unwrap_err());
-        }
-        let result = get_property_data::<i32>(self.device, property_id, 0);
-        let _ = close_session(self.device);
-        if result.is_ok(){
-            Ok(converter(result.unwrap()))
-        }
-        else{
-            Err(result.unwrap_err())
-        }
-    }
-    /// set 4 bytes property
-    fn set_4bytes_property(&self, property_id : u32, value : u32)->Result<bool, ErrorId>{
-        let result = open_session_scoped(self.device);
-        if result.is_err(){
-            return Err(result.unwrap_err());
-        }
-        let result = set_property_data(self.device, property_id, 0, 4, &value as *const u32 as *const c_void);
-        return result;
-    }
-    // common function to take picture
-    fn take_picture_core(&mut self)->Result<bool, ErrorId>{
-        let result = open_session_scoped(self.device);
-        if result.is_err(){
-            return Err(result.unwrap_err());
-        }
-        let result = set_property_data(self.device, kEdsPropID_SaveTo, 0, 4, &(EdsSaveTo::kEdsSaveTo_Host as u32) as *const u32 as *const c_void);
-        if result.is_err(){
-            return result;
-        }
-        let result = send_status_command(self.device, kEdsCameraStatusCommand_UILock, 0);
-        if result.is_err(){
-            return result;
-        }
-        let result = set_capacity(self.device, 
-            EdsCapacity{
-                numberOfFreeClusters : 0x7FFFFFFFi32,
-                bytesPerSector : 0x1000i32,
-                reset : true
-            }
-        );
-        if result.is_err(){
-            return result;
-        }
-        let result = send_status_command(self.device, kEdsCameraStatusCommand_UIUnLock, 0);
-        if result.is_err(){
-            return result;
-        }
-        let result = set_object_event_handler(self.device, kEdsObjectEvent_All, Camera::dir_item_request_transfer_callback, self as *const Camera as *const c_void);
-        if result.is_err(){
-            return result;
-        }
-        let result = send_command(self.device, kEdsCameraCommand_TakePicture, 0);
-        if result.is_ok(){
-            while !self.finish_transfer{
-                unsafe{EdsGetEvent()};
-                if !self.finish_transfer{
-                    std::thread::sleep(std::time::Duration::from_millis(10));
-                }
-            }
-        }
-        return result;
-    }
-
-    /// save to file
-    fn file_transfer_callback(&self, dir_item: EdsDirectoryItemRef, size: u64)->bool{
-        let result = create_file_stream_scoped(&self.file_name, EdsFileCreateDisposition::kEdsFileCreateDisposition_CreateAlways, EdsAccess::kEdsAccess_ReadWrite);
-        if result.is_ok(){
-            let stream = result.unwrap();
-            let _ = download(dir_item, size, stream.stream);
-            let _ = download_complete(dir_item);
-        }
-        else{
-            let _ = download_cancel(dir_item);
-        }
-        return true;
-    }
-    /// save to memory
-    fn memory_transfer_callback(&self, dir_item: EdsDirectoryItemRef, size: u64)->bool{
-        let result = create_memory_stream_scoped(size);
-        if result.is_ok(){
-            let stream = result.unwrap();
-            let _ = download(dir_item, size, stream.stream);
-            let _ = download_complete(dir_item);
-            let data = get_pointer(stream.stream);
-            let length = get_length(stream.stream);
-            if data.is_ok() && length.is_ok(){
-                self.memory_transfer_callback_func.unwrap()(unsafe{std::slice::from_raw_parts(data.unwrap() as *const u8, length.unwrap() as usize)});
-            }
-        }
-        else{
-            let _ = download_cancel(dir_item);
-        }
-        return true;
-    }
-}
-
-impl Drop for Camera{
-    fn drop(&mut self){
-        if self.device != std::ptr::null_mut(){
-            unsafe{
-                EdsRelease(self.device);
-            }
-        }
-    }
-}
 
 // wrap function
 
@@ -506,7 +476,6 @@ fn get_device_info(device: EdsCameraRef)->Result<DeviceInfo, ErrorId>{
     }
 }
 /// EdsOpenSession wrapper
-#[allow(dead_code)]
 fn open_session(device: EdsCameraRef)->Result<bool, ErrorId>{
     let result = unsafe{EdsOpenSession(device)};
     return match result{
@@ -514,14 +483,6 @@ fn open_session(device: EdsCameraRef)->Result<bool, ErrorId>{
         _=>Err(onvert_error(mask_error(result)))
     }
 }
-fn open_session_scoped(device: EdsCameraRef)->Result<Session, ErrorId>{
-    let result = unsafe{EdsOpenSession(device)};
-    return match result{
-        EDS_ERR_OK=>Ok(Session{session_device : device}),
-        _=>Err(onvert_error(mask_error(result)))
-    }
-}
-
 /// EdsCloseSession wrapper
 fn close_session(device: EdsCameraRef)->Result<bool, ErrorId>{
     let result = unsafe{EdsCloseSession(device)};
@@ -558,14 +519,7 @@ T:std::default::Default
 }
 
 /// EdsSetPropertyData wrapper
-fn set_property_data(device: EdsCameraRef, property_id : EdsPropertyID, param : i32, property_size : u32, property_data : *const c_void)->Result<bool, ErrorId>{
-    let result = unsafe{EdsSetPropertyData(device, property_id, param, property_size, property_data)};
-    return match result{
-        EDS_ERR_OK=>Ok(true),
-        _=>Err(onvert_error(mask_error(result)))
-    }
-}
-fn set_property_data_<T>(device: EdsCameraRef, property_id : EdsPropertyID, param : i32, property_data : &T)->Result<bool, ErrorId>{
+fn set_property_data<T>(device: EdsCameraRef, property_id : EdsPropertyID, param : i32, property_data : &T)->Result<bool, ErrorId>{
     let result = unsafe{EdsSetPropertyData(device, property_id, param, std::mem::size_of_val(property_data) as u32, property_data as *const T as *const c_void)};
     return match result{
         EDS_ERR_OK=>Ok(true),
