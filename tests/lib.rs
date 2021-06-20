@@ -224,7 +224,7 @@ mod wrapper_tests{
         for device in devices{
             let result = device.open_session();
             if result.is_ok(){
-                let session = &mut result.unwrap();
+                let session = result.unwrap();
                 let result = session.get_battery_level();
                 writeln!(&mut std::io::stdout(), "get_battery_level {:?}", result).unwrap();
                 let result = session.set_iso_speed(ISOSpeed::ISO100);
@@ -247,6 +247,8 @@ mod wrapper_tests{
                     let _ = writer.flush();
                 });
                 writeln!(&mut std::io::stdout(), "take_picture_to_memory {:?}", result).unwrap();
+                let result = session.start_live_preview();
+                writeln!(&mut std::io::stdout(), "start_live_preview {:?}", result).unwrap();
                 let result = session.take_live_preview(|data|{
                     let path = std::env::current_dir().unwrap();
                     let ch_dest = path.to_string_lossy() + "\\wrapper_tests_live.jpg";
