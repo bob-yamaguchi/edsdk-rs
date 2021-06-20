@@ -25,6 +25,19 @@ pub type EdsImageRef = EdsStreamRef;
 
 pub type EdsEvfImageRef = EdsBaseRef;
 
+// mutable ref types
+pub type EdsBaseMutRef = *mut c_void;
+
+pub type EdsCameraListMutRef = EdsBaseMutRef;
+pub type EdsCameraMutRef = EdsBaseMutRef;
+pub type EdsVolumeMutRef = EdsBaseMutRef;
+pub type EdsDirectoryItemMutRef = EdsBaseMutRef;
+
+pub type EdsStreamMutRef = EdsBaseMutRef;
+pub type EdsImageMutRef = EdsStreamMutRef;
+
+pub type EdsEvfImageMutRef = EdsBaseMutRef;
+
 /// Data Types
 #[repr(u32)]
 pub enum EdsDataType

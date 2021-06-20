@@ -52,15 +52,14 @@ extern "stdcall" {
     /// * inIndex -  The index that is passed in, is zero based.
     /// * outRef - The pointer which receives reference of the specified index .
     /// # Returns:    Any of the sdk errors.
-//    pub fn EdsGetChildAtIndex(inRef : EdsBaseRef, inIndex : i32, outRef : *mut EdsBaseRef)->EdsError;
-    pub fn EdsGetChildAtIndex(inRef : EdsBaseRef, inIndex : i32, outRef : &*mut c_void)->EdsError; // worked
+    pub fn EdsGetChildAtIndex(inRef : EdsBaseRef, inIndex : i32, outRef : &EdsBaseMutRef)->EdsError; // worked
 
     /// # Gets the parent object of the designated object.
     /// # Parameters:
     /// * inRef        - The reference of the item.
     /// * outParentRef - The pointer which receives reference.
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsGetParent(inRef : EdsBaseRef, outParentRef : *mut EdsBaseRef)->EdsError;
+    pub fn EdsGetParent(inRef : EdsBaseRef, outParentRef : &EdsBaseMutRef)->EdsError;
 
     //  Property operating functions
     /// # Gets the byte size and data type of a designated property from a camera object or image object.
@@ -116,8 +115,7 @@ extern "stdcall" {
     /// # Parameters:
     /// * outCameraListRef - Pointer to the camera-list.
     /// # Returns:    Any of the sdk errors.
- //   pub fn EdsGetCameraList(outCameraListRef : *mut EdsCameraListRef)->EdsError;
-    pub fn EdsGetCameraList(outCameraListRef : &*mut c_void)->EdsError; // worked
+    pub fn EdsGetCameraList(outCameraListRef : &EdsCameraListMutRef)->EdsError; // worked
 
     //  Camera operating functions
 
@@ -234,7 +232,7 @@ extern "stdcall" {
     /// # Parameters:
     /// * inDirItemRef - The reference of the directory item.
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsDownloadCancel(inDirItemRef : EdsDirectoryItemRef)->EdsError;
+    pub fn EdsDownloadCancel(inDirItemRef : EdsDirectoryItemRef)->EdsError; // worked
 
     /// # Must be called when downloading of directory items is complete. 
     /// Executing this API makes the camera 
@@ -292,7 +290,7 @@ extern "stdcall" {
     /// * outStream - The reference of the stream.
     /// # Returns:    Any of the sdk errors.
     pub fn EdsCreateFileStream(inFileName : *const u8, inCreateDisposition : EdsFileCreateDisposition, inDesiredAccess : EdsAccess,
-                                outStream : &*mut c_void)->EdsError; // worked
+                                outStream : &EdsStreamMutRef)->EdsError; // worked
 
     /// # Creates a stream in the memory of a host computer. 
     /// In the case of writing in excess of the allocated buffer size, 
@@ -302,7 +300,7 @@ extern "stdcall" {
     /// * outStream - The reference of the stream.
     /// # Returns:    Any of the sdk errors.
     pub fn EdsCreateMemoryStream(inBufferSize : u64,
-                                    outStream : &*mut c_void)->EdsError;
+                                    outStream : &EdsStreamMutRef)->EdsError; // worked
 
     /// # An extended version of EdsCreateStreamFromFile. 
     /// Use this function when working with Unicode file names.
@@ -315,7 +313,7 @@ extern "stdcall" {
     /// * outStream - The reference of the stream.
     /// # Returns:    Any of the sdk errors.
     pub fn EdsCreateFileStreamEx(inFileName : *const u16, inCreateDisposition : EdsFileCreateDisposition, inDesiredAccess : EdsAccess,
-                                    outStream : *mut EdsStreamRef)->EdsError;
+                                    outStream : &EdsStreamMutRef)->EdsError;
 
     /// # Creates a stream from the memory buffer you prepare. 
     /// Unlike the buffer size of streams created by means of EdsCreateMemoryStream, 
@@ -327,7 +325,7 @@ extern "stdcall" {
     /// * outStream - The reference of the stream.
     /// # Returns:    Any of the sdk errors.
     pub fn EdsCreateMemoryStreamFromPointer(inUserBuffer : *const c_void, inBufferSize : u64,
-                                            outStream : *mut EdsStreamRef)->EdsError;
+                                            outStream : &EdsStreamMutRef)->EdsError;
 
     /// # Gets the pointer to the start address of memory managed by the memory stream. 
     /// As the EDSDK automatically resizes the buffer, the memory stream provides 
@@ -343,7 +341,7 @@ extern "stdcall" {
     ///     written in the memory stream.
     /// # Returns:    Any of the sdk errors.
     pub fn EdsGetPointer(inStream : EdsStreamRef,
-                            outPointer : &*mut c_void )->EdsError;
+                            outPointer : &*mut c_void )->EdsError; // worked
 
     /// # Reads data the size of inReadSize into the outBuffer buffer, starting at the current read or write position of the stream. 
     /// The size of data actually read can be designated in outReadSize.
@@ -396,7 +394,7 @@ extern "stdcall" {
     /// * outLength - The length of the stream.
     /// # Returns:    Any of the sdk errors.
     pub fn EdsGetLength(inStreamRef : EdsStreamRef,
-                            outLength : *mut u64 )->EdsError;
+                            outLength : *mut u64 )->EdsError; // worked
 
     /// # Copies data from the copy source stream to the copy destination stream. 
     /// The read or write position of the data to copy is determined from 
@@ -448,7 +446,7 @@ extern "stdcall" {
     /// * inStreamRef - The reference of the stream.
     /// * outImageRef - The reference of the image.
     /// # Returns:    Any of the sdk errors.
-    pub fn EdsCreateImageRef(inStreamRef : EdsStreamRef, outImageRef : *mut EdsImageRef)->EdsError;
+    pub fn EdsCreateImageRef(inStreamRef : EdsStreamRef, outImageRef : &EdsImageMutRef)->EdsError;
 
     /// # Gets image information from a designated image object. 
     /// Here, image information means the image width and height, 
@@ -544,7 +542,7 @@ extern "stdcall" {
     /// * outEvfImageRef - The EVFData reference.
     /// # Returns:    Any of the sdk errors.
     pub fn EdsCreateEvfImageRef (inStreamRef : EdsStreamRef,
-                                    outEvfImageRef : *mut EdsEvfImageRef)->EdsError;
+                                    outEvfImageRef : &EdsEvfImageMutRef)->EdsError;
 
     /// # Downloads the live view image data set for a camera currently in live view mode.
     /// Live view can be started by using the property ID:kEdsPropertyID_Evf_OutputDevice and
@@ -610,7 +608,7 @@ extern "stdcall" {
     /// # Returns:    Any of the sdk errors.
     pub fn EdsSetCameraStateEventHandler(inCameraRef : EdsCameraRef, inEvnet : EdsStateEvent, inStateEventHandler : EdsStateEventHandler, inContext : *const c_void)->EdsError;
 
-    pub fn EdsCreateStream(inStream : *const EdsIStream, outStreamRef : *mut EdsStreamRef)->EdsError;
+    pub fn EdsCreateStream(inStream : *const EdsIStream, outStreamRef : &EdsStreamMutRef)->EdsError;
 
     /// # This function acquires an event. 
     /// In console application, please call this function regularly to acquire
