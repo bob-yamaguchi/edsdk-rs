@@ -32,6 +32,9 @@ pub enum ISOSpeed{
     ISO204800   = 0x000000a0u32,
     ISO409600   = 0x000000a8u32,
 }
+impl Default for ISOSpeed {
+    fn default() -> Self { ISOSpeed::ISOAuto }
+}
 
 #[repr(u32)]
 pub enum ApertureValue{
@@ -141,6 +144,9 @@ pub enum ApertureValue{
     Av80_0  = 0x0000006du32,
     /// Av 91.0
     Av91_0  = 0x00000070u32,
+}
+impl Default for ApertureValue {
+    fn default() -> Self { ApertureValue::Av1_0 }
 }
 
 #[repr(u32)]
@@ -294,7 +300,9 @@ pub enum ShutterSpeed{
     /// Tv 1/8000
     Tv1_8000th  = 0x000000a0u32,
 }
-
+impl Default for ShutterSpeed {
+    fn default() -> Self { ShutterSpeed::TvBulb }
+}
 
 #[repr(u32)]
 #[derive(Debug, PartialEq)]
