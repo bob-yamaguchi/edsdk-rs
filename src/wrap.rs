@@ -155,7 +155,7 @@ impl Session{
         return set_property_data(self.device, kEdsPropID_ImageQuality, 0, &(image_quality as u32));
     }
     /// remote release to strage
-    pub fn take_picture_to_strage(&mut self, file_name: &str)->Result<bool, ErrorId>{
+    pub fn take_picture_to_strage(&self, file_name: &str)->Result<bool, ErrorId>{
         return self.take_picture_core(&mut TakePicturesContext{
             memory_transfer_callback_func: None,
             file_name: String::from(file_name),
@@ -163,7 +163,7 @@ impl Session{
         });
     }
     /// remote release to memory
-    pub fn take_picture_to_memory(&mut self, processor: fn(data: &[u8]))->Result<bool, ErrorId>{
+    pub fn take_picture_to_memory(&self, processor: fn(data: &[u8]))->Result<bool, ErrorId>{
         return self.take_picture_core(&mut TakePicturesContext{
             memory_transfer_callback_func: Some(processor),
             file_name: String::new(),
@@ -171,8 +171,7 @@ impl Session{
         });
     }
 
-    /// get live preview
-    pub fn take_live_preview(&mut self, processor: fn(data: &[u8]))->Result<bool, ErrorId>{
+    pub fn start_live_preview(&self)->Result<bool, ErrorId>{
         let evf_mode = EdsEvfAf::kEdsCameraCommand_EvfAf_ON as i32;
         let result = set_property_data(self.device, kEdsPropID_Evf_Mode, 0, &evf_mode);
         if result.is_err(){
@@ -184,10 +183,19 @@ impl Session{
         }
         let mut out_device = result.unwrap();
         out_device |= EdsEvfOutputDevice::kEdsEvfOutputDevice_PC as i32;
-        let result = set_property_data(self.device, kEdsPropID_Evf_OutputDevice, 0, &out_device);
+        return set_property_data(self.device, kEdsPropID_Evf_OutputDevice, 0, &out_device);
+    }
+    pub fn stop_live_preview(&self)->Result<bool, ErrorId>{
+        let result = get_property_data::<i32>(self.device, kEdsPropID_Evf_OutputDevice, 0);
         if result.is_err(){
             return Err(result.unwrap_err());
         }
+        let mut out_device = result.unwrap();
+        out_device &= !(EdsEvfOutputDevice::kEdsEvfOutputDevice_PC as i32);
+        return set_property_data(self.device, kEdsPropID_Evf_OutputDevice, 0, &out_device);
+    }
+    /// get live preview
+    pub fn take_live_preview(&self, processor: fn(data: &[u8]))->Result<bool, ErrorId>{
         let result = create_memory_stream_scoped(0u64);
         if result.is_err(){
             return Err(result.unwrap_err());
@@ -235,7 +243,7 @@ impl Session{
         }
     }
     // common function to take picture
-    fn take_picture_core(&mut self, context : &mut TakePicturesContext)->Result<bool, ErrorId>{
+    fn take_picture_core(&self, context : &mut TakePicturesContext)->Result<bool, ErrorId>{
         let result = set_property_data(self.device, kEdsPropID_SaveTo, 0, &(EdsSaveTo::kEdsSaveTo_Host as u32));
         if result.is_err(){
             return result;
