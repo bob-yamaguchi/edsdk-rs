@@ -376,7 +376,7 @@ impl Library{
         Library{initialized : false}
     }
 
-    pub fn get_device_list(&self)->Vec<Camera>{
+    pub fn get_device_list(&self)->Vec<Option<Camera>>{
         let mut devices = Vec::new();
         if self.initialized{
             let camera_list = get_camera_list();
@@ -388,9 +388,9 @@ impl Library{
                         let device = get_child_at_index(camera_list, i);
                         if device.is_ok(){
                             devices.push(
-                                Camera{
+                                Some(Camera{
                                     device : device.unwrap(),
-                                }
+                                })
                             );
                         }
                     }
