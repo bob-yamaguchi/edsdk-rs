@@ -206,58 +206,70 @@ mod wrapper_tests{
             panic!("Make this test fail");
         }
         let library = library.unwrap();
-        let devices = library.get_device_list();
+        let mut devices = library.get_device_list();
         let mut count = 0;
         for device in &devices{
-            let device_info = device.get_device_info();
-            if device_info.is_err(){
-                let err = device_info.err().unwrap();
-                writeln!(&mut std::io::stdout(), "get_device_info failed {:?}", err).unwrap();
-                continue;
-            }
-            let device_info = device_info.unwrap();
-            writeln!(&mut std::io::stdout(), "device[{}]", count).unwrap();
-            writeln!(&mut std::io::stdout(), "description {}", device_info.description).unwrap();
-            writeln!(&mut std::io::stdout(), "port {}", device_info.port).unwrap();
+            let _ = device.as_ref().map(|dev|{
+                let device_info = dev.get_device_info();
+                if device_info.is_err(){
+                    let err = device_info.err().unwrap();
+                    writeln!(&mut std::io::stdout(), "get_device_info failed {:?}", err).unwrap();
+                }
+                else{
+                    let device_info = device_info.unwrap();
+                    writeln!(&mut std::io::stdout(), "device[{}]", count).unwrap();
+                    writeln!(&mut std::io::stdout(), "description {}", device_info.description).unwrap();
+                    writeln!(&mut std::io::stdout(), "port {}", device_info.port).unwrap();
+                }
+            });
             count += 1;
         }
-        for device in devices{
-            let result = device.open_session();
-            if result.is_ok(){
-                let session = result.unwrap();
-                let result = session.get_battery_level();
-                writeln!(&mut std::io::stdout(), "get_battery_level {:?}", result).unwrap();
-                let result = session.set_iso_speed(ISOSpeed::ISO100);
-                writeln!(&mut std::io::stdout(), "set_iso_speed {:?}", result).unwrap();
-                let result = session.set_av(ApertureValue::Av2_8);
-                writeln!(&mut std::io::stdout(), "set_av {:?}", result).unwrap();
-                let result = session.set_tv(ShutterSpeed::Tv1_20th);
-                writeln!(&mut std::io::stdout(), "set_tv {:?}", result).unwrap();
-                let result = session.set_image_quality(EdsImageQuality::EdsImageQuality_LR);
-                writeln!(&mut std::io::stdout(), "set_image_quality {:?}", result).unwrap();
-                let path = std::env::current_dir().unwrap();
-                let ch_dest = path.to_string_lossy() + "\\wrapper_tests_strage.cr2";
-                let result = session.take_picture_to_strage(ch_dest.as_ref());
-                writeln!(&mut std::io::stdout(), "take_picture_to_strage {:?}", result).unwrap();
-                let result = session.take_picture_to_memory(|data|{
-                    let path = std::env::current_dir().unwrap();
-                    let ch_dest = path.to_string_lossy() + "\\wrapper_tests_mem.cr2";
-                    let mut writer = BufWriter::new(File::create(ch_dest.as_ref()).unwrap());
-                    let _ = writer.write_all(data);
-                    let _ = writer.flush();
-                });
-                writeln!(&mut std::io::stdout(), "take_picture_to_memory {:?}", result).unwrap();
-                let result = session.start_live_preview();
-                writeln!(&mut std::io::stdout(), "start_live_preview {:?}", result).unwrap();
-                let result = session.take_live_preview(|data|{
-                    let path = std::env::current_dir().unwrap();
-                    let ch_dest = path.to_string_lossy() + "\\wrapper_tests_live.jpg";
-                    let mut writer = BufWriter::new(File::create(ch_dest.as_ref()).unwrap());
-                    let _ = writer.write_all(data);
-                    let _ = writer.flush();
-                });
-                writeln!(&mut std::io::stdout(), "take_live_preview {:?}", result).unwrap();
+        if devices.len() > 0{
+            let any = std::mem::replace(&mut devices[0], None);
+            if any.is_some(){
+                writeln!(&mut std::io::stdout(), "device is some").unwrap();
+                devices[0] = any;
             }
+        }
+        for device in devices{
+            device.as_ref().map(|dev|{
+                let result = dev.open_session();
+                if result.is_ok(){
+                    let session = result.unwrap();
+                    let result = session.get_battery_level();
+                    writeln!(&mut std::io::stdout(), "get_battery_level {:?}", result).unwrap();
+                    let result = session.set_iso_speed(ISOSpeed::ISO100);
+                    writeln!(&mut std::io::stdout(), "set_iso_speed {:?}", result).unwrap();
+                    let result = session.set_av(ApertureValue::Av2_8);
+                    writeln!(&mut std::io::stdout(), "set_av {:?}", result).unwrap();
+                    let result = session.set_tv(ShutterSpeed::Tv1_20th);
+                    writeln!(&mut std::io::stdout(), "set_tv {:?}", result).unwrap();
+                    let result = session.set_image_quality(EdsImageQuality::EdsImageQuality_LR);
+                    writeln!(&mut std::io::stdout(), "set_image_quality {:?}", result).unwrap();
+                    let path = std::env::current_dir().unwrap();
+                    let ch_dest = path.to_string_lossy() + "\\wrapper_tests_strage.cr2";
+                    let result = session.take_picture_to_strage(ch_dest.as_ref());
+                    writeln!(&mut std::io::stdout(), "take_picture_to_strage {:?}", result).unwrap();
+                    let result = session.take_picture_to_memory(|data|{
+                        let path = std::env::current_dir().unwrap();
+                        let ch_dest = path.to_string_lossy() + "\\wrapper_tests_mem.cr2";
+                        let mut writer = BufWriter::new(File::create(ch_dest.as_ref()).unwrap());
+                        let _ = writer.write_all(data);
+                        let _ = writer.flush();
+                    });
+                    writeln!(&mut std::io::stdout(), "take_picture_to_memory {:?}", result).unwrap();
+                    let result = session.start_live_preview();
+                    writeln!(&mut std::io::stdout(), "start_live_preview {:?}", result).unwrap();
+                    let result = session.take_live_preview(|data|{
+                        let path = std::env::current_dir().unwrap();
+                        let ch_dest = path.to_string_lossy() + "\\wrapper_tests_live.jpg";
+                        let mut writer = BufWriter::new(File::create(ch_dest.as_ref()).unwrap());
+                        let _ = writer.write_all(data);
+                        let _ = writer.flush();
+                    });
+                    writeln!(&mut std::io::stdout(), "take_live_preview {:?}", result).unwrap();
+                }
+            });
             break;
         }
     }
