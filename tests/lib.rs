@@ -84,9 +84,9 @@ mod native_tests{
                     writeln!(&mut std::io::stdout(), "EdsGetDeviceInfo() = {}", result).unwrap();
                     if result == EDS_ERR_OK{
                         let name = CStr::from_bytes_with_nul_unchecked(&device_info.szPortName);
-                        writeln!(&mut std::io::stdout(), "port name = {}", name.to_str().unwrap()).unwrap();
+                        writeln!(&mut std::io::stdout(), "port name = {:?}", name.to_str().unwrap()).unwrap();
                         let description = CStr::from_bytes_with_nul_unchecked(&device_info.szDeviceDescription);
-                        writeln!(&mut std::io::stdout(), "device description = {}", description.to_str().unwrap()).unwrap();
+                        writeln!(&mut std::io::stdout(), "device description = {:?}", description.to_str().unwrap()).unwrap();
                     }
                     let result = EdsOpenSession(camera);
                     writeln!(&mut std::io::stdout(), "EdsOpenSession() = {}", result).unwrap();
@@ -218,8 +218,8 @@ mod wrapper_tests{
                 else{
                     let device_info = device_info.unwrap();
                     writeln!(&mut std::io::stdout(), "device[{}]", count).unwrap();
-                    writeln!(&mut std::io::stdout(), "description {}", device_info.description).unwrap();
-                    writeln!(&mut std::io::stdout(), "port {}", device_info.port).unwrap();
+                    writeln!(&mut std::io::stdout(), "description {:?}", device_info.description).unwrap();
+                    writeln!(&mut std::io::stdout(), "port {:?}", device_info.port).unwrap();
                 }
             });
             count += 1;

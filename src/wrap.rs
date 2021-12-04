@@ -158,7 +158,7 @@ impl Session{
     pub fn take_picture_to_strage(&self, file_name: &str)->Result<bool, ErrorId>{
         return self.take_picture_core(&mut TakePicturesContext{
             memory_transfer_callback_func: None,
-            file_name: String::from(file_name),
+            file_name: file_name.to_string(),
             finish_transfer: false,
         });
     }
@@ -467,15 +467,21 @@ fn get_device_info(device: EdsCameraRef)->Result<DeviceInfo, ErrorId>{
     };
     let result = unsafe{EdsGetDeviceInfo(device, &mut device_info)};
     if result == EDS_ERR_OK{
+        let pos = device_info.szPortName.iter().position(|&v| v == 0);
+        let port_term = if pos.is_some(){ pos.unwrap() + 1 } else {1};
+
+        let pos = device_info.szDeviceDescription.iter().position(|&v| v == 0);
+        let description_term = if pos.is_some(){ pos.unwrap() + 1 } else{ 1 };
+
         let port;
         let description;
         unsafe{
-            port = CStr::from_bytes_with_nul_unchecked(&device_info.szPortName);
-            description = CStr::from_bytes_with_nul_unchecked(&device_info.szDeviceDescription);
+            port = CStr::from_bytes_with_nul_unchecked(&device_info.szPortName[0..port_term]);
+            description = CStr::from_bytes_with_nul_unchecked(&device_info.szDeviceDescription[0..description_term]);
         }
         let device_info = DeviceInfo{
-            description : String::from(description.to_str().unwrap()),
-            port : String::from(port.to_str().unwrap())
+            description : description.to_str().unwrap().to_string(),
+            port : port.to_str().unwrap().to_string()
         };
         Ok(device_info)
     }
@@ -598,6 +604,8 @@ fn get_directory_item_info(dir_item : EdsDirectoryItemRef)->Result<DirectoryItem
         dateTime: 0
     };
     let result = unsafe{EdsGetDirectoryItemInfo(dir_item, &mut dir_item_info)};
+    let pos = dir_item_info.szFileName.iter().position(|&v| v == 0);
+    let filename_term = if pos.is_some(){ pos.unwrap() + 1 } else {1};
     return match result{
         EDS_ERR_OK=>Ok(
             DirectoryItemInfo{
@@ -607,7 +615,7 @@ fn get_directory_item_info(dir_item : EdsDirectoryItemRef)->Result<DirectoryItem
                 option: dir_item_info.option,
                 format: dir_item_info.format,
                 date_time: dir_item_info.dateTime,
-                file_name: String::from(unsafe{CStr::from_bytes_with_nul_unchecked(&dir_item_info.szFileName)}.to_str().unwrap())
+                file_name: String::from(unsafe{CStr::from_bytes_with_nul_unchecked(&dir_item_info.szFileName[0..filename_term])}.to_str().unwrap())
             }),
         _=>Err(onvert_error(mask_error(result)))
     }
